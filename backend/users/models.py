@@ -22,14 +22,14 @@ class User(models.Model):
 class Education(models.Model):
     education_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, models.CASCADE) 
-    degree = models.CharField(max_length=50)
-    specialization = models.CharField(max_length=100)
-    university = models.CharField(max_length=100)
-    cgpa = models.DecimalField(db_column='CGPA', max_digits=3, decimal_places=2) 
+    degree = models.CharField(max_length=255) # Increased for potential encryption or long names
+    specialization = models.CharField(max_length=255) # Increased for encryption
+    university = models.CharField(max_length=255) # Increased for encryption
+    cgpa = models.CharField(db_column='CGPA', max_length=255) # Changed to CharField for encryption
     year_of_completion = models.IntegerField()
 
     class Meta:
-        managed = False
+        managed = True # Changed to True
         db_table = 'education'
 
 
@@ -48,12 +48,15 @@ class Certification(models.Model):
 class Predictionhistory(models.Model):
     prediction_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, models.CASCADE)
-    predicted_roles = models.CharField(max_length=255)
-    confidence_scores = models.DecimalField(max_digits=5, decimal_places=2)
-    timestamp = models.DateTimeField(blank=True, null=True)
+    predicted_roles = models.TextField(help_text="JSON list of roles")
+    confidence_scores = models.TextField(help_text="JSON list of scores or full prediction object")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_flagged = models.BooleanField(default=False)
+    corrected_role = models.CharField(max_length=100, blank=True, null=True)
+    admin_notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'predictionhistory'
 
 
@@ -112,3 +115,18 @@ class NewsletterSubscriber(models.Model):
     class Meta:
         managed = True
         db_table = 'newsletter_subscribers'
+
+
+
+
+class Feedback(models.Model):
+    feedback_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    prediction = models.ForeignKey(Predictionhistory, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=0) # 1 to 5 stars
+    comments = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'feedback'

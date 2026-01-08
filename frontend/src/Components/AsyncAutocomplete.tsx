@@ -21,6 +21,7 @@ interface AsyncAutocompleteProps {
     required?: boolean;
     freeSolo?: boolean;
     name?: string;
+    context?: Record<string, any>;
 }
 
 export default function AsyncAutocomplete({
@@ -32,6 +33,7 @@ export default function AsyncAutocomplete({
     staticOptions = [],
     required = false,
     freeSolo = true,
+    context = {},
 }: AsyncAutocompleteProps) {
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState<readonly OptionType[]>([]);
@@ -47,23 +49,24 @@ export default function AsyncAutocomplete({
 
     const fetchOptions = useMemo(
         () =>
-            debounce(async (input: string, callback: (results: OptionType[]) => void) => {
+            debounce(async (input: string, currentContext: Record<string, any>, callback: (results: OptionType[]) => void) => {
                 if (!apiEndpoint) {
                     // Filter static options
                     const filtered = normalizedStaticOptions.filter(opt =>
                         opt.label.toLowerCase().includes(input.toLowerCase())
                     );
-                    // Ensure "Other" is always present if strict filtering removes it, though typical use case keeps it at bottom
-                    // Actually, let's just return normalizedStaticOptions and let Autocomplete filter locally for static
-                    // But if we want to simulate API search:
                     callback(filtered);
                     return;
                 }
 
+                // Remove length check to allow "popular" suggestions on empty input
+                // if (input.length < 3) { return; }
+
                 try {
                     setLoading(true);
                     // Assume API returns a list of strings or objects with 'name'/'label'
-                    const response = await api.get(apiEndpoint, { params: { search: input } });
+                    const params = { search: input, ...currentContext };
+                    const response = await api.get(apiEndpoint, { params });
                     const data = response.data;
 
                     let newOptions: OptionType[] = [];
@@ -83,7 +86,7 @@ export default function AsyncAutocomplete({
                 } finally {
                     setLoading(false);
                 }
-            }, 400),
+            }, 1000),
         [apiEndpoint, normalizedStaticOptions],
     );
 
@@ -95,8 +98,9 @@ export default function AsyncAutocomplete({
         }
 
         // Initial load or search
+        // Initial load or search
         setLoading(true);
-        fetchOptions(inputValue, (results) => {
+        fetchOptions(inputValue, context, (results) => {
             if (active) {
                 setLoading(false);
                 setOptions(results);
@@ -106,7 +110,7 @@ export default function AsyncAutocomplete({
         return () => {
             active = false;
         };
-    }, [inputValue, fetchOptions, open]);
+    }, [inputValue, fetchOptions, open, context]);
 
     return (
         <Autocomplete

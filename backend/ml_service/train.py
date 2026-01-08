@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 import joblib
 from django.conf import settings
-from users.models import TrainingData, JobPlacement, User
+from users.models import TrainingData, JobPlacement, User, Predictionhistory
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -25,9 +25,38 @@ def train_model():
     print("Starting model training...")
     
     # 1. Fetch Synthetic/Manual Data
-    synthetic_data = list(TrainingData.objects.all().values())
-    df_synthetic = pd.DataFrame(synthetic_data)
+    # 1. Fetch Synthetic/Manual Data
+    # Fetch all records from TrainingData table
+    synthetic_queryset = TrainingData.objects.all().values('degree', 'specialization', 'skills', 'certifications', 'target_job_role')
+    df_synthetic = pd.DataFrame(list(synthetic_queryset))
     print(f"Loaded {len(df_synthetic)} records from TrainingData.")
+
+    # 1.5 Fetch Feedback Data (Corrected Predictions)
+    feedback_data = []
+    # Fetch logs that are flagged and have a corrected role
+    feedback_logs = Predictionhistory.objects.filter(is_flagged=True).exclude(corrected_role__isnull=True).exclude(corrected_role__exact='').select_related('user')
+    
+    for log in feedback_logs:
+        user = log.user
+        # Get latest education
+        education = user.education_set.first()
+        if not education:
+            continue
+            
+        # Get skills and certs
+        skills = [s.skill_name for s in user.skills.all()]
+        certs = [c.cert_name for c in user.certification_set.all()]
+        
+        feedback_data.append({
+            'degree': education.degree,
+            'specialization': education.specialization,
+            'skills': ", ".join(skills),
+            'certifications': ", ".join(certs),
+            'target_job_role': log.corrected_role # Use the ADMIN CORRECTED role
+        })
+        
+    df_feedback = pd.DataFrame(feedback_data)
+    print(f"Loaded {len(df_feedback)} records from PredictionFeedback (Admin Corrections).")
 
     # 2. Fetch Real-world Placement Data
     real_data = []
@@ -56,11 +85,11 @@ def train_model():
     print(f"Loaded {len(df_real)} records from JobPlacement (Real Data).")
     
     # 3. Combine Datasets
-    if df_synthetic.empty and df_real.empty:
+    if df_synthetic.empty and df_real.empty and df_feedback.empty:
         print("No training data found.")
         return {"status": "error", "message": "No training data found in database."}
         
-    df = pd.concat([df_synthetic, df_real], ignore_index=True)
+    df = pd.concat([df_synthetic, df_real, df_feedback], ignore_index=True)
     print(f"Total training samples: {len(df)}")
     
     # 4. Preprocessing

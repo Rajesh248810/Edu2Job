@@ -59,8 +59,12 @@ import {
     Visibility as ViewIcon,
     School as SchoolIcon,
     Verified as VerifiedIcon,
-    ArrowBack as ArrowBackIcon
+    ArrowBack as ArrowBackIcon,
+    FactCheck as FeedbackIcon
 } from '@mui/icons-material';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import PredictionLogTable from '../Components/PredictionLogTable';
+import FeedbackTable from '../Components/FeedbackTable';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useThemeContext } from '../theme/ThemeContext';
@@ -142,6 +146,12 @@ const AdminDashboard: React.FC = () => {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [isTraining, setIsTraining] = useState(false);
+
+    const tabVariants: Variants = {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+        exit: { opacity: 0, x: -20, transition: { duration: 0.2 } }
+    };
 
     // Mobile Menu State
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -406,7 +416,7 @@ const AdminDashboard: React.FC = () => {
         setLogSearchQuery(e.target.value);
     };
 
-    // Trigger search when query changes (debounced ideally, but simple effect for now)
+    // Trigger search when query changes (debounced)
     useEffect(() => {
         if (tabValue === 3) {
             const timeoutId = setTimeout(() => {
@@ -415,6 +425,7 @@ const AdminDashboard: React.FC = () => {
             return () => clearTimeout(timeoutId);
         }
     }, [logSearchQuery]);
+
 
     const handleSelectLog = (id: number) => {
         if (selectedLogIds.includes(id)) {
@@ -500,6 +511,8 @@ const AdminDashboard: React.FC = () => {
                 <MenuItem onClick={() => handleMobileMenuClick(1)}>User Management</MenuItem>
                 <MenuItem onClick={() => handleMobileMenuClick(2)}>Model Governance</MenuItem>
                 <MenuItem onClick={() => handleMobileMenuClick(3)}>System Logs</MenuItem>
+                <MenuItem onClick={() => handleMobileMenuClick(4)}>Prediction Logs</MenuItem>
+                <MenuItem onClick={() => handleMobileMenuClick(5)}>User Feedback</MenuItem>
             </Menu>
 
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
@@ -581,6 +594,8 @@ const AdminDashboard: React.FC = () => {
                                     <Tab icon={<PeopleIcon />} label="User Management" />
                                     <Tab icon={<ModelIcon />} label="Model Governance" />
                                     <Tab icon={<SecurityIcon />} label="System Logs" />
+                                    <Tab icon={<FeedbackIcon />} label="Prediction Logs" />
+                                    <Tab icon={<FeedbackIcon />} label="User Feedback" />
                                 </Tabs>
                             </Paper>
                         )}
@@ -589,457 +604,533 @@ const AdminDashboard: React.FC = () => {
                         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
                         {successMsg && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMsg('')}>{successMsg}</Alert>}
 
-                        {/* --- TAB 0: ANALYTICS --- */}
-                        {tabValue === 0 && analytics && (
-                            <Box>
-                                {/* Stats Cards */}
-                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
-                                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 140, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'text.primary' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <PeopleIcon color="primary" sx={{ mr: 1 }} />
-                                            <Typography variant="h6" color="primary">Total Users</Typography>
-                                        </Box>
-                                        <Typography variant="h3">{analytics.total_users}</Typography>
-                                        <Typography variant="caption" color="text.secondary">Registered Accounts</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 140, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: 'text.primary' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <SchoolIcon color="secondary" sx={{ mr: 1 }} />
-                                            <Typography variant="h6" color="secondary">Students</Typography>
-                                        </Box>
-                                        <Typography variant="h3">{analytics.students_count}</Typography>
-                                        <Typography variant="caption" color="text.secondary">Active Learners</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 140, bgcolor: alpha(theme.palette.success.main, 0.1), color: 'text.primary' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <HealthIcon color="success" sx={{ mr: 1 }} />
-                                            <Typography variant="h6" color="success">System Health</Typography>
-                                        </Box>
-                                        <Typography variant="h4" sx={{ mt: 1 }}>{analytics.system_health}</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 140, bgcolor: alpha(theme.palette.warning.main, 0.1), color: 'text.primary' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <PendingIcon color="warning" sx={{ mr: 1 }} />
-                                            <Typography variant="h6" color="warning">Pending Reviews</Typography>
-                                        </Box>
-                                        <Typography variant="h3">{analytics.pending_reviews}</Typography>
-                                        <Typography variant="caption" color="text.secondary">Incomplete Profiles</Typography>
-                                    </Paper>
-                                </Box>
+                        {/* Dashboard Content */}
+                        <Box sx={{ mt: 3, minHeight: 400, position: 'relative' }}>
+                            <AnimatePresence mode="wait">
+                                {/* --- TAB 0: ANALYTICS --- */}
+                                {tabValue === 0 && analytics && (
+                                    <motion.div
+                                        key="analytics"
+                                        variants={tabVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <Box>
+                                            {/* Stats Cards */}
+                                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+                                                <Paper elevation={0} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 160, borderRadius: 4, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'text.primary', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                        <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 40, height: 40 }}>
+                                                            <PeopleIcon sx={{ color: 'white' }} />
+                                                        </Avatar>
+                                                        <Typography variant="h6" fontWeight="bold">Total Users</Typography>
+                                                    </Box>
+                                                    <Typography variant="h3" fontWeight="bold">{analytics.total_users}</Typography>
+                                                    <Typography variant="caption" color="text.secondary" fontWeight="medium">Registered Accounts</Typography>
+                                                </Paper>
+                                                <Paper elevation={0} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 160, borderRadius: 4, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: 'text.primary', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                        <Avatar sx={{ bgcolor: 'secondary.main', mr: 2, width: 40, height: 40 }}>
+                                                            <SchoolIcon sx={{ color: 'white' }} />
+                                                        </Avatar>
+                                                        <Typography variant="h6" fontWeight="bold">Students</Typography>
+                                                    </Box>
+                                                    <Typography variant="h3">{analytics.students_count}</Typography>
+                                                    <Typography variant="caption" color="text.secondary">Active Learners</Typography>
+                                                </Paper>
+                                                <Paper elevation={0} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 160, borderRadius: 4, bgcolor: alpha(theme.palette.success.main, 0.1), color: 'text.primary', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                        <Avatar sx={{ bgcolor: 'success.main', mr: 2, width: 40, height: 40 }}>
+                                                            <HealthIcon sx={{ color: 'white' }} />
+                                                        </Avatar>
+                                                        <Typography variant="h6" fontWeight="bold">System Health</Typography>
+                                                    </Box>
+                                                    <Typography variant="h4" fontWeight="bold" sx={{ mt: 1 }}>{analytics.system_health}</Typography>
+                                                </Paper>
+                                                <Paper elevation={0} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 160, borderRadius: 4, bgcolor: alpha(theme.palette.warning.main, 0.1), color: 'text.primary', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                        <Avatar sx={{ bgcolor: 'warning.main', mr: 2, width: 40, height: 40 }}>
+                                                            <PendingIcon sx={{ color: 'white' }} />
+                                                        </Avatar>
+                                                        <Typography variant="h6" fontWeight="bold">Pending Reviews</Typography>
+                                                    </Box>
+                                                    <Typography variant="h3" fontWeight="bold">{analytics.pending_reviews}</Typography>
+                                                    <Typography variant="caption" color="text.secondary" fontWeight="medium">Incomplete Profiles</Typography>
+                                                </Paper>
+                                            </Box>
 
-                                {/* Charts */}
-                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                                    <Paper sx={{ p: 3, height: 400 }}>
-                                        <Typography variant="h6" gutterBottom>University Distribution</Typography>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={analytics.university_distribution}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    labelLine={false}
-                                                    label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                                    outerRadius={120}
-                                                    fill="#8884d8"
-                                                    dataKey="value"
-                                                    onClick={handlePieClick}
-                                                    cursor="pointer"
-                                                >
-                                                    {analytics.university_distribution.map((_entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ cursor: 'pointer' }} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </Paper>
-                                    <Paper sx={{ p: 3, height: 400 }}>
-                                        <Typography variant="h6" gutterBottom>Top Predicted Jobs</Typography>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={analytics.job_trends}>
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="name" />
-                                                <YAxis />
-                                                <Tooltip />
-                                                <Legend />
-                                                <Bar dataKey="count" fill="#8884d8" />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </Paper>
-                                </Box>
-                            </Box>
-                        )}
-
-                        {/* --- TAB 1: USER MANAGEMENT --- */}
-                        {tabValue === 1 && (
-                            <Paper sx={{ p: 2 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                                    <Typography variant="h6">User Management</Typography>
-                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                        {selectedUserIds.length > 0 && (
-                                            <Button
-                                                variant="contained"
-                                                color="error"
-                                                startIcon={<DeleteIcon />}
-                                                onClick={handleDeleteUsers}
-                                            >
-                                                Delete ({selectedUserIds.length})
-                                            </Button>
-                                        )}
-                                        <TextField
-                                            size="small"
-                                            placeholder="Search users..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <SearchIcon color="action" />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-                                        <Button startIcon={<RefreshIcon />} onClick={fetchUsers}>Refresh</Button>
-                                    </Box>
-                                </Box>
-                                <TableContainer>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow sx={{ bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.900' }}>
-                                                <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        indeterminate={selectedUserIds.length > 0 && selectedUserIds.length < users.length}
-                                                        checked={users.length > 0 && selectedUserIds.length === users.length}
-                                                        onChange={handleSelectAllUsers}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>ID</TableCell>
-                                                <TableCell>Name</TableCell>
-                                                <TableCell>Email</TableCell>
-                                                <TableCell>Role</TableCell>
-                                                <TableCell align="right">Actions</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {users.map((u) => (
-                                                <TableRow key={u.user_id} selected={selectedUserIds.includes(u.user_id)}>
-                                                    <TableCell padding="checkbox">
-                                                        <Checkbox
-                                                            checked={selectedUserIds.includes(u.user_id)}
-                                                            onChange={() => handleSelectUser(u.user_id)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>{u.user_id}</TableCell>
-                                                    <TableCell>{u.name}</TableCell>
-                                                    <TableCell>{u.email}</TableCell>
-                                                    <TableCell>
-                                                        <FormControl variant="standard" size="small">
-                                                            <Select
-                                                                value={u.role}
-                                                                onChange={(e) => handleRoleChange(u.user_id, e.target.value)}
-                                                                sx={{ fontSize: '0.875rem' }}
+                                            {/* Charts */}
+                                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                                                <Paper sx={{ p: 3, height: 400 }}>
+                                                    <Typography variant="h6" gutterBottom>University Distribution</Typography>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie
+                                                                data={analytics.university_distribution}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                labelLine={false}
+                                                                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                                                                outerRadius={120}
+                                                                fill="#8884d8"
+                                                                dataKey="value"
+                                                                onClick={handlePieClick}
+                                                                cursor="pointer"
                                                             >
-                                                                <MenuItem value="student">Student</MenuItem>
-                                                                <MenuItem value="admin">Admin</MenuItem>
-                                                                <MenuItem value="moderator">Moderator</MenuItem>
-                                                            </Select>
-                                                        </FormControl>
-                                                    </TableCell>
-                                                    <TableCell align="right">
-                                                        <IconButton color="error" onClick={() => handleDeleteUser(u.user_id)}>
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            </Paper>
-                        )}
+                                                                {analytics.university_distribution.map((_entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ cursor: 'pointer' }} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </Paper>
+                                                <Paper sx={{ p: 3, height: 400 }}>
+                                                    <Typography variant="h6" gutterBottom>Top Predicted Jobs</Typography>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={analytics.job_trends}>
+                                                            <CartesianGrid strokeDasharray="3 3" />
+                                                            <XAxis dataKey="name" />
+                                                            <YAxis />
+                                                            <Tooltip />
+                                                            <Legend />
+                                                            <Bar dataKey="count" fill="#8884d8" />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </Paper>
+                                            </Box>
+                                        </Box>
+                                    </motion.div>
+                                )}
 
-                        {/* --- TAB 2: MODEL GOVERNANCE --- */}
-                        {
-                            tabValue === 2 && (
-                                <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                                    {/* Training Progress Card */}
-                                    {analytics?.training_stats && (
-                                        <Paper sx={{ p: 4, mb: 4, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                                            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <AssessmentIcon sx={{ mr: 1 }} /> Training Coverage
-                                            </Typography>
-
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                <Box sx={{ width: '100%', mr: 1 }}>
-                                                    <LinearProgress
-                                                        variant="determinate"
-                                                        value={analytics.training_stats.total > 0
-                                                            ? (analytics.training_stats.trained / analytics.training_stats.total) * 100
-                                                            : 0}
-                                                        sx={{ height: 10, borderRadius: 5 }}
-                                                        color={analytics.training_stats.trained < analytics.training_stats.total ? "warning" : "success"}
+                                {/* --- TAB 1: USER MANAGEMENT --- */}
+                                {tabValue === 1 && (
+                                    <motion.div
+                                        key="users"
+                                        variants={tabVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                                                <Typography variant="h6">User Management</Typography>
+                                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                                    {selectedUserIds.length > 0 && (
+                                                        <Button
+                                                            variant="contained"
+                                                            color="error"
+                                                            startIcon={<DeleteIcon />}
+                                                            onClick={handleDeleteUsers}
+                                                        >
+                                                            Delete ({selectedUserIds.length})
+                                                        </Button>
+                                                    )}
+                                                    <TextField
+                                                        size="small"
+                                                        placeholder="Search users..."
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                        InputProps={{
+                                                            startAdornment: (
+                                                                <InputAdornment position="start">
+                                                                    <SearchIcon color="action" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        }}
                                                     />
-                                                </Box>
-                                                <Box sx={{ minWidth: 35 }}>
-                                                    <Typography variant="body2" color="text.secondary">{
-                                                        analytics.training_stats.total > 0
-                                                            ? `${Math.round((analytics.training_stats.trained / analytics.training_stats.total) * 100)}%`
-                                                            : '0%'
-                                                    }</Typography>
+                                                    <Button startIcon={<RefreshIcon />} onClick={fetchUsers}>Refresh</Button>
                                                 </Box>
                                             </Box>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {analytics.training_stats.trained.toLocaleString()} of {analytics.training_stats.total.toLocaleString()} records trained.
-                                                {analytics.training_stats.trained < analytics.training_stats.total && (
-                                                    <Typography component="span" color="warning.main" fontWeight="bold" sx={{ ml: 1 }}>
-                                                        Retraining recommended!
-                                                    </Typography>
-                                                )}
-                                            </Typography>
+                                            <TableContainer>
+                                                <Table>
+                                                    <TableHead>
+                                                        <TableRow sx={{ bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.900' }}>
+                                                            <TableCell padding="checkbox">
+                                                                <Checkbox
+                                                                    indeterminate={selectedUserIds.length > 0 && selectedUserIds.length < users.length}
+                                                                    checked={users.length > 0 && selectedUserIds.length === users.length}
+                                                                    onChange={handleSelectAllUsers}
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>ID</TableCell>
+                                                            <TableCell>Name</TableCell>
+                                                            <TableCell>Email</TableCell>
+                                                            <TableCell>Role</TableCell>
+                                                            <TableCell align="right">Actions</TableCell>
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {users.map((u) => (
+                                                            <TableRow key={u.user_id} selected={selectedUserIds.includes(u.user_id)}>
+                                                                <TableCell padding="checkbox">
+                                                                    <Checkbox
+                                                                        checked={selectedUserIds.includes(u.user_id)}
+                                                                        onChange={() => handleSelectUser(u.user_id)}
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>{u.user_id}</TableCell>
+                                                                <TableCell>{u.name}</TableCell>
+                                                                <TableCell>{u.email}</TableCell>
+                                                                <TableCell>
+                                                                    <FormControl variant="standard" size="small">
+                                                                        <Select
+                                                                            value={u.role}
+                                                                            onChange={(e) => handleRoleChange(u.user_id, e.target.value)}
+                                                                            sx={{ fontSize: '0.875rem' }}
+                                                                        >
+                                                                            <MenuItem value="student">Student</MenuItem>
+                                                                            <MenuItem value="admin">Admin</MenuItem>
+                                                                            <MenuItem value="moderator">Moderator</MenuItem>
+                                                                        </Select>
+                                                                    </FormControl>
+                                                                </TableCell>
+                                                                <TableCell align="right">
+                                                                    <IconButton color="error" onClick={() => handleDeleteUser(u.user_id)}>
+                                                                        <DeleteIcon />
+                                                                    </IconButton>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
                                         </Paper>
-                                    )}
+                                    </motion.div>
+                                )}
 
-                                    {/* Single Data Entry Form */}
-                                    <Paper sx={{ p: 4, mb: 4 }}>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <UploadIcon sx={{ mr: 1 }} /> Add Training Record
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                            Manually enter a single student record for training.
-                                        </Typography>
-
-                                        <Box component="form"
-                                            onSubmit={(e) => {
-                                                e.preventDefault();
-                                                const formData = new FormData(e.currentTarget);
-                                                const data = Object.fromEntries(formData.entries());
-
-                                                setLoading(true);
-                                                api.post(`${API_BASE_URL}/api/admin/model/data/`, data)
-                                                    .then(() => {
-                                                        setSuccessMsg("Record added successfully");
-                                                        (e.target as HTMLFormElement).reset();
-                                                    })
-                                                    .catch((err) => {
-                                                        console.error(err);
-                                                        setError("Failed to add record");
-                                                    })
-                                                    .finally(() => setLoading(false));
-                                            }}
-                                            sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}
+                                {/* --- TAB 2: MODEL GOVERNANCE --- */}
+                                {
+                                    tabValue === 2 && (
+                                        <motion.div
+                                            key="model"
+                                            variants={tabVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
                                         >
-                                            <TextField label="Degree" name="degree" required size="small" placeholder="e.g. B.Tech" />
-                                            <TextField label="Specialization" name="specialization" required size="small" placeholder="e.g. Computer Science" />
+                                            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                                                {/* Training Progress Card */}
+                                                {analytics?.training_stats && (
+                                                    <Paper sx={{ p: 4, mb: 4, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <AssessmentIcon sx={{ mr: 1 }} /> Training Coverage
+                                                        </Typography>
 
-                                            <TextField
-                                                label="Skills"
-                                                name="skills"
-                                                required
-                                                size="small"
-                                                multiline
-                                                rows={2}
-                                                placeholder="e.g. Python, React, SQL"
-                                                sx={{ gridColumn: 'span 2' }}
-                                            />
-
-                                            <TextField
-                                                label="Certifications"
-                                                name="certifications"
-                                                required
-                                                size="small"
-                                                multiline
-                                                rows={2}
-                                                placeholder="e.g. AWS Solution Architect, Google Data Analytics"
-                                                sx={{ gridColumn: 'span 2' }}
-                                            />
-
-                                            <TextField
-                                                label="Target Job Role (Label)"
-                                                name="target_job_role"
-                                                required
-                                                size="small"
-                                                placeholder="e.g. Full Stack Developer"
-                                                sx={{ gridColumn: 'span 2' }}
-                                                helperText="This is the value the model will learn to predict."
-                                            />
-
-                                            <Button
-                                                type="submit"
-                                                variant="contained"
-                                                disabled={loading}
-                                                sx={{ gridColumn: 'span 2', mt: 2 }}
-                                            >
-                                                {loading ? <CircularProgress size={24} /> : 'Add Training Record'}
-                                            </Button>
-                                        </Box>
-                                    </Paper>
-
-                                    <Paper sx={{ p: 4, mb: 4 }}>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <UploadIcon sx={{ mr: 1 }} /> Upload Training Data (CSV)
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                            Upload a new CSV dataset to retrain the job prediction model.
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                            <Button variant="outlined" component="label">
-                                                Choose File
-                                                <input type="file" hidden accept=".csv" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} />
-                                            </Button>
-                                            <Typography variant="body2">{file ? file.name : 'No file chosen'}</Typography>
-                                            <Button
-                                                variant="contained"
-                                                onClick={handleFileUpload}
-                                                disabled={!file || loading}
-                                            >
-                                                {loading ? <CircularProgress size={24} /> : 'Upload'}
-                                            </Button>
-                                        </Box>
-                                    </Paper>
-
-                                    <Paper sx={{ p: 4 }}>
-                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <ModelIcon sx={{ mr: 1 }} /> Model Retraining
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                            Trigger the Python ML script to re-learn from the latest dataset.
-                                        </Typography>
-                                        <Button
-                                            variant="contained"
-                                            color={isTraining ? "warning" : "secondary"}
-                                            size="large"
-                                            onClick={handleRetrain}
-                                            disabled={loading || isTraining}
-                                            startIcon={(loading || isTraining) ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
-                                        >
-                                            {isTraining ? "Training in Progress..." : "Retrain Model Now"}
-                                        </Button>
-                                        {isTraining && (
-                                            <Box sx={{ mt: 2, width: '100%' }}>
-                                                <Typography variant="caption" color="text.secondary" gutterBottom>
-                                                    Training model on latest data... This may take a few minutes.
-                                                </Typography>
-                                                <LinearProgress color="secondary" />
-                                            </Box>
-                                        )}
-                                    </Paper>
-                                </Box>
-                            )
-                        }
-
-                        {/* --- TAB 3: SYSTEM LOGS --- */}
-                        {
-                            tabValue === 3 && (
-                                <Paper sx={{ p: 3, borderRadius: 2, boxShadow: theme.shadows[3] }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                                        <Typography variant="h6" fontWeight="bold" color="text.primary">System Logs</Typography>
-
-                                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                            {selectedLogIds.length > 0 && (
-                                                <Button
-                                                    variant="contained"
-                                                    color="error"
-                                                    startIcon={<DeleteIcon />}
-                                                    onClick={handleDeleteLogs}
-                                                >
-                                                    Delete ({selectedLogIds.length})
-                                                </Button>
-                                            )}
-                                            <TextField
-                                                size="small"
-                                                placeholder="Search logs..."
-                                                value={logSearchQuery}
-                                                onChange={handleLogSearch}
-                                                InputProps={{
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <SearchIcon color="action" />
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                            />
-                                            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchLogs}>Refresh</Button>
-                                        </Box>
-                                    </Box>
-                                    <TableContainer sx={{ borderRadius: 1, border: `1px solid ${theme.palette.divider}` }}>
-                                        <Table size="medium">
-                                            <TableHead>
-                                                <TableRow sx={{ bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.900' }}>
-                                                    <TableCell padding="checkbox">
-                                                        <Checkbox
-                                                            indeterminate={selectedLogIds.length > 0 && selectedLogIds.length < logs.length}
-                                                            checked={logs.length > 0 && selectedLogIds.length === logs.length}
-                                                            onChange={handleSelectAllLogs}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>Timestamp</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>Admin</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>Target User</TableCell>
-                                                    <TableCell align="right">Actions</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {logs.length > 0 ? logs.map((log) => (
-                                                    <TableRow key={log.log_id} hover selected={selectedLogIds.includes(log.log_id)}>
-                                                        <TableCell padding="checkbox">
-                                                            <Checkbox
-                                                                checked={selectedLogIds.includes(log.log_id)}
-                                                                onChange={() => handleSelectLog(log.log_id)}
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                                                        <TableCell>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                <SecurityIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                                                                {log.admin__name}
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                            <Box sx={{ width: '100%', mr: 1 }}>
+                                                                <LinearProgress
+                                                                    variant="determinate"
+                                                                    value={analytics.training_stats.total > 0
+                                                                        ? (analytics.training_stats.trained / analytics.training_stats.total) * 100
+                                                                        : 0}
+                                                                    sx={{ height: 10, borderRadius: 5 }}
+                                                                    color={analytics.training_stats.trained < analytics.training_stats.total ? "warning" : "success"}
+                                                                />
                                                             </Box>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Chip
-                                                                label={log.action_type}
-                                                                size="small"
-                                                                color={
-                                                                    log.action_type.includes('DELETE') ? 'error' :
-                                                                        log.action_type.includes('UPDATE') ? 'info' :
-                                                                            log.action_type.includes('CREATE') ? 'success' : 'default'
-                                                                }
-                                                                variant="filled"
-                                                                sx={{ fontWeight: 500 }}
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>{log.target_user__name}</TableCell>
-                                                        <TableCell align="right">
-                                                            <IconButton
-                                                                size="small"
-                                                                color="error"
-                                                                onClick={() => {
-                                                                    if (window.confirm('Delete this log?')) {
-                                                                        api.delete(`${API_BASE_URL}/api/admin/logs/`, { data: { log_ids: [log.log_id] } })
-                                                                            .then(() => {
-                                                                                setSuccessMsg("Log deleted");
-                                                                                fetchLogs();
-                                                                            });
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <DeleteIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )) : (
-                                                    <TableRow>
-                                                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                                                            <Typography color="text.secondary">No logs found</Typography>
-                                                        </TableCell>
-                                                    </TableRow>
+                                                            <Box sx={{ minWidth: 35 }}>
+                                                                <Typography variant="body2" color="text.secondary">{
+                                                                    analytics.training_stats.total > 0
+                                                                        ? `${Math.round((analytics.training_stats.trained / analytics.training_stats.total) * 100)}%`
+                                                                        : '0%'
+                                                                }</Typography>
+                                                            </Box>
+                                                        </Box>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {analytics.training_stats.trained.toLocaleString()} of {analytics.training_stats.total.toLocaleString()} records trained.
+                                                            {analytics.training_stats.trained < analytics.training_stats.total && (
+                                                                <Typography component="span" color="warning.main" fontWeight="bold" sx={{ ml: 1 }}>
+                                                                    Retraining recommended!
+                                                                </Typography>
+                                                            )}
+                                                        </Typography>
+                                                    </Paper>
                                                 )}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                </Paper>
-                            )
-                        }
+
+                                                {/* Single Data Entry Form */}
+                                                <Paper sx={{ p: 4, mb: 4 }}>
+                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <UploadIcon sx={{ mr: 1 }} /> Add Training Record
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                                        Manually enter a single student record for training.
+                                                    </Typography>
+
+                                                    <Box component="form"
+                                                        onSubmit={(e) => {
+                                                            e.preventDefault();
+                                                            const formData = new FormData(e.currentTarget);
+                                                            const data = Object.fromEntries(formData.entries());
+
+                                                            setLoading(true);
+                                                            api.post(`${API_BASE_URL}/api/admin/model/data/`, data)
+                                                                .then(() => {
+                                                                    setSuccessMsg("Record added successfully");
+                                                                    (e.target as HTMLFormElement).reset();
+                                                                })
+                                                                .catch((err) => {
+                                                                    console.error(err);
+                                                                    setError("Failed to add record");
+                                                                })
+                                                                .finally(() => setLoading(false));
+                                                        }}
+                                                        sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}
+                                                    >
+                                                        <TextField label="Degree" name="degree" required size="small" placeholder="e.g. B.Tech" />
+                                                        <TextField label="Specialization" name="specialization" required size="small" placeholder="e.g. Computer Science" />
+
+                                                        <TextField
+                                                            label="Skills"
+                                                            name="skills"
+                                                            required
+                                                            size="small"
+                                                            multiline
+                                                            rows={2}
+                                                            placeholder="e.g. Python, React, SQL"
+                                                            sx={{ gridColumn: 'span 2' }}
+                                                        />
+
+                                                        <TextField
+                                                            label="Certifications"
+                                                            name="certifications"
+                                                            required
+                                                            size="small"
+                                                            multiline
+                                                            rows={2}
+                                                            placeholder="e.g. AWS Solution Architect, Google Data Analytics"
+                                                            sx={{ gridColumn: 'span 2' }}
+                                                        />
+
+                                                        <TextField
+                                                            label="Target Job Role (Label)"
+                                                            name="target_job_role"
+                                                            required
+                                                            size="small"
+                                                            placeholder="e.g. Full Stack Developer"
+                                                            sx={{ gridColumn: 'span 2' }}
+                                                            helperText="This is the value the model will learn to predict."
+                                                        />
+
+                                                        <Button
+                                                            type="submit"
+                                                            variant="contained"
+                                                            disabled={loading}
+                                                            sx={{ gridColumn: 'span 2', mt: 2 }}
+                                                        >
+                                                            {loading ? <CircularProgress size={24} /> : 'Add Training Record'}
+                                                        </Button>
+                                                    </Box>
+                                                </Paper>
+
+                                                <Paper sx={{ p: 4, mb: 4 }}>
+                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <UploadIcon sx={{ mr: 1 }} /> Upload Training Data (CSV)
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                                        Upload a new CSV dataset to retrain the job prediction model.
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                                        <Button variant="outlined" component="label">
+                                                            Choose File
+                                                            <input type="file" hidden accept=".csv" onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)} />
+                                                        </Button>
+                                                        <Typography variant="body2">{file ? file.name : 'No file chosen'}</Typography>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={handleFileUpload}
+                                                            disabled={!file || loading}
+                                                        >
+                                                            {loading ? <CircularProgress size={24} /> : 'Upload'}
+                                                        </Button>
+                                                    </Box>
+                                                </Paper>
+
+                                                <Paper sx={{ p: 4 }}>
+                                                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <ModelIcon sx={{ mr: 1 }} /> Model Retraining
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                                        Trigger the Python ML script to re-learn from the latest dataset.
+                                                    </Typography>
+                                                    <Button
+                                                        variant="contained"
+                                                        color={isTraining ? "warning" : "secondary"}
+                                                        size="large"
+                                                        onClick={handleRetrain}
+                                                        disabled={loading || isTraining}
+                                                        startIcon={(loading || isTraining) ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
+                                                    >
+                                                        {isTraining ? "Training in Progress..." : "Retrain Model Now"}
+                                                    </Button>
+                                                    {isTraining && (
+                                                        <Box sx={{ mt: 2, width: '100%' }}>
+                                                            <Typography variant="caption" color="text.secondary" gutterBottom>
+                                                                Training model on latest data... This may take a few minutes.
+                                                            </Typography>
+                                                            <LinearProgress color="secondary" />
+                                                        </Box>
+                                                    )}
+                                                </Paper>
+                                            </Box>
+                                        </motion.div>
+                                    )
+                                }
+
+                                {/* --- TAB 3: SYSTEM LOGS --- */}
+                                {
+                                    tabValue === 3 && (
+                                        <motion.div
+                                            key="logs"
+                                            variants={tabVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                        >
+                                            <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                                                    <Typography variant="h6" fontWeight="bold" color="text.primary">System Logs</Typography>
+
+                                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                                        {selectedLogIds.length > 0 && (
+                                                            <Button
+                                                                variant="contained"
+                                                                color="error"
+                                                                startIcon={<DeleteIcon />}
+                                                                onClick={handleDeleteLogs}
+                                                            >
+                                                                Delete ({selectedLogIds.length})
+                                                            </Button>
+                                                        )}
+                                                        <TextField
+                                                            size="small"
+                                                            placeholder="Search logs..."
+                                                            value={logSearchQuery}
+                                                            onChange={handleLogSearch}
+                                                            onKeyPress={(e) => e.key === 'Enter' && fetchLogs()}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        <SearchIcon color="action" />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchLogs}>Refresh</Button>
+                                                    </Box>
+                                                </Box>
+                                                <TableContainer sx={{ borderRadius: 1, border: `1px solid ${theme.palette.divider}` }}>
+                                                    <Table size="medium">
+                                                        <TableHead>
+                                                            <TableRow sx={{ bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.900' }}>
+                                                                <TableCell padding="checkbox">
+                                                                    <Checkbox
+                                                                        indeterminate={selectedLogIds.length > 0 && selectedLogIds.length < logs.length}
+                                                                        checked={logs.length > 0 && selectedLogIds.length === logs.length}
+                                                                        onChange={handleSelectAllLogs}
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell sx={{ fontWeight: 'bold' }}>Timestamp</TableCell>
+                                                                <TableCell sx={{ fontWeight: 'bold' }}>Admin</TableCell>
+                                                                <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                                                                <TableCell sx={{ fontWeight: 'bold' }}>Target User</TableCell>
+                                                                <TableCell align="right">Actions</TableCell>
+                                                            </TableRow>
+                                                        </TableHead>
+                                                        <TableBody>
+                                                            {logs.length > 0 ? logs.map((log) => (
+                                                                <TableRow key={log.log_id} hover selected={selectedLogIds.includes(log.log_id)}>
+                                                                    <TableCell padding="checkbox">
+                                                                        <Checkbox
+                                                                            checked={selectedLogIds.includes(log.log_id)}
+                                                                            onChange={() => handleSelectLog(log.log_id)}
+                                                                        />
+                                                                    </TableCell>
+                                                                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                                                                    <TableCell>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <SecurityIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                                                                            {log.admin__name}
+                                                                        </Box>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <Chip
+                                                                            label={log.action_type}
+                                                                            size="small"
+                                                                            color={
+                                                                                log.action_type.includes('DELETE') ? 'error' :
+                                                                                    log.action_type.includes('UPDATE') ? 'info' :
+                                                                                        log.action_type.includes('CREATE') ? 'success' : 'default'
+                                                                            }
+                                                                            variant="filled"
+                                                                            sx={{ fontWeight: 500 }}
+                                                                        />
+                                                                    </TableCell>
+                                                                    <TableCell>{log.target_user__name}</TableCell>
+                                                                    <TableCell align="right">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            color="error"
+                                                                            onClick={() => {
+                                                                                if (window.confirm('Delete this log?')) {
+                                                                                    api.delete(`${API_BASE_URL}/api/admin/logs/`, { data: { log_ids: [log.log_id] } })
+                                                                                        .then(() => {
+                                                                                            setSuccessMsg("Log deleted");
+                                                                                            fetchLogs();
+                                                                                        });
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <DeleteIcon fontSize="small" />
+                                                                        </IconButton>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )) : (
+                                                                <TableRow>
+                                                                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                                                        <Typography color="text.secondary">No logs found</Typography>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )}
+                                                        </TableBody>
+                                                    </Table>
+                                                </TableContainer>
+                                            </Paper>
+                                        </motion.div>
+                                    )
+                                }
+
+                                {/* --- TAB 4: PREDICTION LOGS --- */}
+                                {
+                                    tabValue === 4 && (
+                                        <motion.div
+                                            key="prediction-logs"
+                                            variants={tabVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                        >
+                                            <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+                                                <PredictionLogTable />
+                                            </Paper>
+                                        </motion.div>
+                                    )
+                                }
+
+                                {/* --- TAB 5: USER FEEDBACK --- */}
+                                {tabValue === 5 && (
+                                    <motion.div
+                                        key="feedback"
+                                        variants={tabVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <FeedbackTable />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </Box>
                     </>
                 )
                 }

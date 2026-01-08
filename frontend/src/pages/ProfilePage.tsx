@@ -9,16 +9,16 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ mb: 2 }}>
-            <Button 
-                startIcon={<ArrowBackIcon />} 
-                onClick={() => navigate('/dashboard')}
-            >
-                Back to Dashboard
-            </Button>
-        </Box>
-        {/* This renders the form you just wrote */}
-        <ProfileForm />
+      <Box sx={{ mb: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/dashboard')}
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
+      {/* This renders the form you just wrote */}
+      <ProfileForm />
     </Container>
   );
 };

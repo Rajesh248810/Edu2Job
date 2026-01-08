@@ -1,9 +1,97 @@
 import React, { useState } from 'react';
 import {
     Box, Typography, Button, CircularProgress, Alert, LinearProgress, Chip, Fade, Grow,
-    Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider
+    Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Rating, TextField
 } from '@mui/material';
-import { Psychology as PsychologyIcon, EmojiEvents as TrophyIcon, Work as WorkIcon, Person as PersonIcon, Business as BusinessIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Psychology as PsychologyIcon, EmojiEvents as TrophyIcon, Work as WorkIcon, Person as PersonIcon, Business as BusinessIcon, Visibility as VisibilityIcon, History as HistoryIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, ThumbUp, ThumbDown, Close as CloseIcon } from '@mui/icons-material';
+import { IconButton, Collapse } from '@mui/material';
+
+// ... (other imports)
+
+const HistoryItem = ({ item }: { item: any }) => {
+    const [open, setOpen] = useState(false);
+    const topPred = item.details && Array.isArray(item.details) && item.details.length > 0 ? item.details[0] : null;
+    const missingSkills = topPred ? topPred.missing_skills : [];
+
+    return (
+        <React.Fragment>
+            <ListItem alignItems="flex-start"
+                secondaryAction={
+                    <IconButton edge="end" onClick={() => setOpen(!open)}>
+                        {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </IconButton>
+                }
+                sx={{ cursor: 'pointer' }}
+                onClick={() => setOpen(!open)}
+            >
+                <ListItemText
+                    primary={
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                {item.role}
+                            </Typography>
+                            {item.is_flagged && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                    <Chip label="Flagged by Admin" size="small" color="error" variant="outlined" />
+                                    {item.corrected_role && (
+                                        <Typography variant="caption" color="error" fontWeight="bold">
+                                            Correction: {item.corrected_role}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        </Box>
+                    }
+                    secondary={
+                        <React.Fragment>
+                            <Typography variant="body2" color="primary" fontWeight="bold">
+                                {item.confidence}% Confidence
+                            </Typography>
+                            {item.admin_notes && (
+                                <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                                    Note: {item.admin_notes}
+                                </Typography>
+                            )}
+                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                {new Date(item.date).toLocaleDateString()} at {new Date(item.date).toLocaleTimeString()}
+                            </Typography>
+                        </React.Fragment>
+                    }
+                />
+            </ListItem>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+                <Box sx={{ pl: 2, pr: 2, pb: 2, bgcolor: 'rgba(0,0,0,0.02)' }}>
+                    {missingSkills && missingSkills.length > 0 ? (
+                        <>
+                            <Typography variant="caption" color="error" fontWeight="bold" gutterBottom>
+                                Missing Skills:
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                {missingSkills.map((skill: string, idx: number) => (
+                                    <Chip key={idx} label={skill} size="small" color="error" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                                ))}
+                            </Box>
+                        </>
+                    ) : (
+                        <Typography variant="caption" color="success.main" fontWeight="bold">
+                            No missing skills! You are a perfect match.
+                        </Typography>
+                    )}
+                </Box>
+            </Collapse>
+            <Divider component="li" />
+        </React.Fragment>
+    );
+};
+
+// ... inside JobPredictor ...
+
+// Replace the list rendering:
+// <List>
+//     {historyData.map((item, index) => (
+//         <HistoryItem key={index} item={item} />
+//     ))}
+// </List>
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
 import GlassCard from '../Components/GlassCard';
@@ -44,6 +132,54 @@ const JobPredictor: React.FC = () => {
     const [openSkillsModal, setOpenSkillsModal] = useState(false);
     const [currentMissingSkills, setCurrentMissingSkills] = useState<string[]>([]);
 
+    // History Modal State
+    const [openHistoryModal, setOpenHistoryModal] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyData, setHistoryData] = useState<any[]>([]);
+
+    // Feedback State
+    const [predictionId, setPredictionId] = useState<number | null>(null);
+    const [feedbackStep, setFeedbackStep] = useState<'initial' | 'detailed' | 'submitted' | 'closed'>('initial');
+    const [isHelpful, setIsHelpful] = useState<boolean | null>(null);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+    const [rating, setRating] = useState<number | null>(0);
+    const [comment, setComment] = useState('');
+
+    const handleFeedbackSubmit = async () => {
+        if (!rating) return;
+        const fullComment = `[Tags: ${selectedTags.join(', ')}] ${comment}`;
+
+        try {
+            await api.post('/api/feedback/', {
+                user_id: user?.user_id,
+                prediction_id: predictionId || (historyData.length > 0 ? historyData[0].id : null),
+                rating: rating,
+                comments: fullComment
+            });
+            setFeedbackStep('submitted');
+        } catch (err) {
+            console.error("Feedback failed", err);
+        }
+    };
+
+
+    const handleOpenHistory = async () => {
+        setOpenHistoryModal(true);
+        setHistoryLoading(true);
+        try {
+            if (!user?.user_id) return;
+            const response = await api.get(`/api/prediction-history/?user_id=${user.user_id}`);
+            if (response.status === 200) {
+                setHistoryData(response.data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch history", err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
     const handlePredict = async () => {
         setLoading(true);
         setError(null);
@@ -60,6 +196,13 @@ const JobPredictor: React.FC = () => {
 
             if (response.status === 200) {
                 setPredictions(response.data.predictions);
+                setPredictionId(response.data.prediction_id);
+                // Reset feedback state
+                setFeedbackStep('initial');
+                setIsHelpful(null);
+                setSelectedTags([]);
+                setRating(0);
+                setComment('');
             }
         } catch (err: any) {
             console.error("Prediction Error:", err);
@@ -138,6 +281,14 @@ const JobPredictor: React.FC = () => {
                 <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ position: 'relative', zIndex: 1 }}>
                     Ready to discover your future?
                 </Typography>
+
+                <Button
+                    startIcon={<HistoryIcon />}
+                    onClick={handleOpenHistory}
+                    sx={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}
+                >
+                    History
+                </Button>
 
                 <Button
                     variant="contained"
@@ -227,9 +378,137 @@ const JobPredictor: React.FC = () => {
                                 >
                                     View Placed Students
                                 </Button>
+
                             </GlassCard>
                         </Box>
                     </Grow>
+
+                    {/* Feedback Section */}
+                    {feedbackStep !== 'closed' && (
+                        <Grow in={true} timeout={900}>
+                            <Box sx={{ mb: 4 }}>
+                                <GlassCard sx={{ p: 4, textAlign: 'center' }}>
+                                    {feedbackStep === 'submitted' ? (
+                                        <Box sx={{ py: 2, position: 'relative' }}>
+                                            <IconButton
+                                                onClick={() => setFeedbackStep('closed')}
+                                                sx={{ position: 'absolute', top: -10, right: -10 }}
+                                                size="small"
+                                            >
+                                                <CloseIcon fontSize="small" />
+                                            </IconButton>
+                                            <Avatar sx={{ bgcolor: 'success.light', width: 60, height: 60, mx: 'auto', mb: 2 }}>
+                                                <ThumbUp />
+                                            </Avatar>
+                                            <Typography variant="h6" fontWeight="bold" gutterBottom>
+                                                Thanks for your feedback!
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                We'll use this to improve your future career predictions.
+                                            </Typography>
+                                        </Box>
+                                    ) : feedbackStep === 'initial' ? (
+                                        <Box>
+                                            <Typography variant="h6" gutterBottom fontWeight="bold">
+                                                Was this prediction helpful?
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 3 }}>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="large"
+                                                    startIcon={<ThumbUp />}
+                                                    onClick={() => {
+                                                        setIsHelpful(true);
+                                                        setRating(4);
+                                                        setFeedbackStep('detailed');
+                                                    }}
+                                                    sx={{ borderRadius: 50, px: 4, py: 1.5, borderColor: 'success.main', color: 'success.main', '&:hover': { bgcolor: 'success.light', color: 'white' } }}
+                                                >
+                                                    Yes, it was
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="large"
+                                                    startIcon={<ThumbDown />}
+                                                    onClick={() => {
+                                                        setIsHelpful(false);
+                                                        setRating(2);
+                                                        setFeedbackStep('detailed');
+                                                    }}
+                                                    sx={{ borderRadius: 50, px: 4, py: 1.5, borderColor: 'error.main', color: 'error.main', '&:hover': { bgcolor: 'error.light', color: 'white' } }}
+                                                >
+                                                    No, not really
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                    ) : ( // detailed step
+                                        <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+                                            <Typography variant="h6" gutterBottom fontWeight="bold">
+                                                {isHelpful ? 'Great! What did you like?' : 'Tell us what went wrong'}
+                                            </Typography>
+
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', mb: 3, mt: 2 }}>
+                                                {(isHelpful
+                                                    ? ["Accurate Role", "Good Skill Match", "Helpful Insights", "Motivating"]
+                                                    : ["Inaccurate Role", "Skills Mismatch", "Too Generic", "Irrelevant"]
+                                                ).map((tag) => (
+                                                    <Chip
+                                                        key={tag}
+                                                        label={tag}
+                                                        onClick={() => {
+                                                            setSelectedTags(prev =>
+                                                                prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                                                            );
+                                                        }}
+                                                        color={selectedTags.includes(tag) ? (isHelpful ? "success" : "error") : "default"}
+                                                        variant={selectedTags.includes(tag) ? "filled" : "outlined"}
+                                                        sx={{ cursor: 'pointer' }}
+                                                    />
+                                                ))}
+                                            </Box>
+
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography component="legend">Rate this prediction</Typography>
+                                                <Rating
+                                                    name="prediction-rating"
+                                                    value={rating}
+                                                    onChange={(_, newValue) => setRating(newValue)}
+                                                    size="large"
+                                                />
+                                            </Box>
+
+                                            <TextField
+                                                placeholder="Any other comments?"
+                                                multiline
+                                                rows={2}
+                                                variant="outlined"
+                                                fullWidth
+                                                size="small"
+                                                value={comment}
+                                                onChange={(e) => setComment(e.target.value)}
+                                                sx={{ mb: 3 }}
+                                            />
+
+                                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                                                <Button onClick={() => setFeedbackStep('initial')} color="inherit">
+                                                    Back
+                                                </Button>
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={handleFeedbackSubmit}
+                                                    color={isHelpful ? "success" : "primary"}
+                                                    disabled={!rating}
+                                                >
+                                                    Submit Feedback
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                </GlassCard>
+                            </Box>
+                        </Grow>
+                    )}
+
 
                     {/* Runners Up */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
@@ -296,6 +575,7 @@ const JobPredictor: React.FC = () => {
                     </Box>
                 </Box>
             )}
+
 
             {/* Placed Students Modal */}
             <Dialog
@@ -416,7 +696,43 @@ const JobPredictor: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+
+            {/* History Modal */}
+            <Dialog
+                open={openHistoryModal}
+                onClose={() => setOpenHistoryModal(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: 3, p: 1 }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 'bold', pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <HistoryIcon color="primary" /> Prediction History
+                </DialogTitle>
+                <Divider />
+                <DialogContent>
+                    {historyLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : historyData.length > 0 ? (
+                        <List>
+                            {historyData.map((item, index) => (
+                                <HistoryItem key={index} item={item} />
+                            ))}
+                        </List>
+                    ) : (
+                        <Box sx={{ textAlign: 'center', p: 4 }}>
+                            <Typography color="text.secondary">No prediction history found.</Typography>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenHistoryModal(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+        </Box >
     );
 };
 

@@ -69,3 +69,71 @@ export const UNIVERSITIES = [
     "Yale University",
     "Columbia University"
 ];
+
+export const DEGREE_SPECIALIZATION_MAP: Record<string, string[]> = {
+    "B.Tech": [
+        "Computer Science and Engineering",
+        "Information Technology",
+        "Electronics and Communication",
+        "Mechanical Engineering",
+        "Civil Engineering",
+        "Electrical Engineering",
+        "Chemical Engineering",
+        "Aerospace Engineering",
+        "Biotechnology"
+    ],
+    "B.E.": [
+        "Computer Science and Engineering",
+        "Information Technology",
+        "Electronics and Communication",
+        "Mechanical Engineering",
+        "Civil Engineering",
+        "Electrical Engineering"
+    ],
+    "B.Sc": [
+        "Computer Science",
+        "Physics",
+        "Chemistry",
+        "Mathematics",
+        "Zoology",
+        "Botany",
+        "Information Technology",
+        "Agriculture"
+    ],
+    "B.Com": [
+        "General",
+        "Accounting and Finance",
+        "Banking and Insurance",
+        "Computer Applications",
+        "Taxation"
+    ],
+    "B.A.": [
+        "English",
+        "Economics",
+        "History",
+        "Political Science",
+        "Psychology",
+        "Sociology"
+    ],
+    "M.Tech": [
+        "Computer Science and Engineering",
+        "Data Science",
+        "Artificial Intelligence",
+        "VLSI Design",
+        "Thermal Engineering",
+        "Structural Engineering"
+    ],
+    "MBA": [
+        "Marketing",
+        "Finance",
+        "Human Resources",
+        "Operations Management",
+        "Information Technology",
+        "Business Analytics"
+    ],
+    "MCA": [
+        "Computer Applications",
+        "Software Development",
+        "Cloud Computing"
+    ]
+};

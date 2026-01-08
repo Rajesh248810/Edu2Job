@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User, Adminlogs, Education, Predictionhistory, TrainingData
+from .models import User, Adminlogs, Education, Predictionhistory, TrainingData, Feedback
 from .serializers import UserSerializer
 from django.db.models import Count
 import datetime
@@ -9,6 +9,7 @@ from .permissions import IsAdmin
 import csv
 import os
 from django.conf import settings
+import json
 
 class AdminUserListView(APIView):
     """
@@ -396,3 +397,159 @@ class AdminUniversityDetailView(APIView):
                 })
                 
         return Response(students)
+
+class AdminPredictionLogListView(APIView):
+    """
+    GET: List all prediction logs with details
+    """
+    permission_classes = [IsAdmin] 
+
+    def get(self, request):
+        query = request.query_params.get('search', '')
+        logs = Predictionhistory.objects.all().select_related('user').order_by('-timestamp')
+        
+        if query:
+            from django.db.models import Q
+            logs = logs.filter(
+                Q(user__name__icontains=query) |
+                Q(user__email__icontains=query) |
+                Q(predicted_roles__icontains=query)
+            )
+
+        data = []
+        for log in logs:
+            try:
+                # Robust parsing for confidence scores
+                if isinstance(log.confidence_scores, str):
+                    try:
+                        scores = json.loads(log.confidence_scores)
+                    except json.JSONDecodeError:
+                        # Fallback if string but valid JSON (e.g. single quotes) or simple string
+                         scores = []
+                elif isinstance(log.confidence_scores, list):
+                     scores = log.confidence_scores
+                else:
+                    scores = [] # unexpected type
+            except Exception as e:
+                print(f"Error parsing scores for log {log.prediction_id}: {e}")
+                scores = []
+
+            data.append({
+                'id': log.prediction_id,
+                'user_name': log.user.name,
+                'user_email': log.user.email,
+                'predicted_roles': log.predicted_roles,
+                'confidence_scores': scores,
+                'timestamp': log.timestamp,
+                'is_flagged': log.is_flagged,
+                'corrected_role': log.corrected_role,
+                'admin_notes': log.admin_notes
+            })
+        return Response(data)
+
+    def delete(self, request):
+        """
+        DELETE: Delete one or multiple prediction logs
+        """
+        log_ids = request.data.get('log_ids', [])
+        if not log_ids:
+            return Response({'error': 'No logs selected'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Filter and delete
+            deleted_count, _ = Predictionhistory.objects.filter(prediction_id__in=log_ids).delete()
+            
+            if deleted_count == 0:
+                return Response({'error': 'No logs found with provided IDs'}, status=status.HTTP_404_NOT_FOUND)
+                
+            return Response({'message': f'{deleted_count} logs deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request):
+        """
+        PATCH: Bulk update prediction logs (flag/unflag)
+        """
+        log_ids = request.data.get('log_ids', [])
+        action = request.data.get('action') # 'flag' or 'unflag'
+
+        if not log_ids or not action:
+            return Response({'error': 'Missing log_ids or action'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            is_flagged = True if action == 'flag' else False
+            updated_count = Predictionhistory.objects.filter(prediction_id__in=log_ids).update(is_flagged=is_flagged)
+            
+            return Response({'message': f'{updated_count} logs updated successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminPredictionLogDetailView(APIView):
+    """
+    PATCH: Flag incorrect prediction or Add correction
+    """
+    permission_classes = [IsAdmin]
+
+    def patch(self, request, pk):
+        try:
+            log = Predictionhistory.objects.get(pk=pk)
+        except Predictionhistory.DoesNotExist:
+            return Response({'error': 'Log not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update fields
+        if 'is_flagged' in request.data:
+            log.is_flagged = request.data['is_flagged']
+        
+        corrected_role = request.data.get('corrected_role')
+        if corrected_role is not None:
+             log.corrected_role = corrected_role
+            
+        admin_notes = request.data.get('admin_notes')
+        if admin_notes is not None:
+            log.admin_notes = admin_notes
+
+        log.save()
+        return Response({'message': 'Prediction log updated successfully'}, status=status.HTTP_200_OK)
+
+
+class AdminFeedbackView(APIView):
+    """
+    GET: List all user feedback
+    """
+    permission_classes = [IsAdmin]
+    def get(self, request):
+        try:
+            query = request.query_params.get('search', '')
+            # Select related to optimize queries
+            feedbacks = Feedback.objects.all().select_related('user', 'prediction').order_by('-created_at')
+            
+            if query:
+                from django.db.models import Q
+                feedbacks = feedbacks.filter(
+                    Q(user__name__icontains=query) |
+                    Q(comments__icontains=query) | 
+                    Q(prediction__predicted_roles__icontains=query)
+                )
+
+            data = []
+            for f in feedbacks:
+                try:
+                    data.append({
+                        'feedback_id': f.feedback_id,
+                        'user_name': f.user.name if f.user else 'Unknown',
+                        'user_email': f.user.email if f.user else 'Unknown',
+                        'rating': f.rating,
+                        'comments': f.comments,
+                        'created_at': f.created_at,
+                        'predicted_role': f.prediction.predicted_roles if f.prediction else 'N/A',
+                        'prediction_id': f.prediction.prediction_id if f.prediction else None
+                    })
+                except Exception as inner_e:
+                    print(f"Error processing feedback row {f.feedback_id}: {inner_e}")
+                    continue
+
+            return Response(data)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': f"Server Error in Feedback View: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

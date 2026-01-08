@@ -1,14 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, TextField, Button, Typography, Paper,
-  Alert, CircularProgress, List, ListItem, ListItemText,
-  ListItemSecondaryAction, IconButton, Divider, Chip, MenuItem
+  Alert, CircularProgress, Card, CardContent,
+  IconButton, Divider, Chip, MenuItem, useTheme, CardActions,
+  Tabs, Tab, Fade, Avatar
 } from '@mui/material';
-import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import Grid from '@mui/material/Grid';
+import {
+  Delete as DeleteIcon, Edit as EditIcon,
+  School as SchoolIcon,
+  EmojiEvents as AwardIcon,
+  Work as WorkIcon,
+  Psychology as SkillIcon,
+  Lock as LockIcon,
+  Add as AddIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Business as BusinessIcon,
+  CalendarMonth as DateIcon,
+  Grade as GradeIcon
+} from '@mui/icons-material';
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
-import { DEGREES, SPECIALIZATIONS } from '../data/profileOptions';
-import GooglePlacesAutocomplete from './GooglePlacesAutocomplete';
+import { DEGREES, SPECIALIZATIONS, DEGREE_SPECIALIZATION_MAP } from '../data/profileOptions';
+
 import AsyncAutocomplete from './AsyncAutocomplete';
 
 interface EducationData {
@@ -34,7 +49,13 @@ interface PlacementData {
 
 const ProfileForm: React.FC = () => {
   const { user, refreshUser } = useAuth();
-  const [activeSection, setActiveSection] = useState<'education' | 'certification' | 'skill' | 'placement' | 'password'>('education');
+  const theme = useTheme();
+
+  // Tabs State
+  const [activeTab, setActiveTab] = useState(0);
+  const sections = ['education', 'certification', 'skill', 'placement', 'password'];
+  const activeSection = sections[activeTab] as 'education' | 'certification' | 'skill' | 'placement' | 'password';
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -43,6 +64,9 @@ const ProfileForm: React.FC = () => {
   const [eduData, setEduData] = useState<EducationData>({
     degree: '', specialization: '', university: '', cgpa: '', year_of_completion: ''
   });
+
+  // Derived State / Contexts
+  const degreeContext = useMemo(() => ({ degree: eduData.degree }), [eduData.degree]);
   const [certData, setCertData] = useState<CertificationData>({
     cert_name: '', issuing_organization: '', issue_date: ''
   });
@@ -63,7 +87,7 @@ const ProfileForm: React.FC = () => {
     setPasswordData({ password: '', confirmPassword: '' });
   }, [activeSection]);
 
-  // Force refresh user data on mount to ensure IDs are present
+  // Force refresh user data on mount
   useEffect(() => {
     refreshUser();
   }, []);
@@ -71,12 +95,14 @@ const ProfileForm: React.FC = () => {
   // Handle Input Changes
   const handleEduChange = (e: React.ChangeEvent<HTMLInputElement>) => setEduData({ ...eduData, [e.target.name]: e.target.value });
   const handleCertChange = (e: React.ChangeEvent<HTMLInputElement>) => setCertData({ ...certData, [e.target.name]: e.target.value });
-
   const handlePlacementChange = (e: React.ChangeEvent<HTMLInputElement>) => setPlacementData({ ...placementData, [e.target.name]: e.target.value });
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
 
   // Populate form for editing
   const handleEdit = (item: any, type: 'education' | 'certification' | 'placement') => {
+    // Scroll to form
+    document.getElementById('profile-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
+
     if (type === 'education') {
       setEditingId(item.education_id);
       setEduData({
@@ -105,7 +131,6 @@ const ProfileForm: React.FC = () => {
     setMessage(null);
   };
 
-  // Delete Handler
   const handleDelete = async (id: number, type: 'education' | 'certification' | 'skill' | 'placement') => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     setLoading(true);
@@ -114,13 +139,14 @@ const ProfileForm: React.FC = () => {
       setMessage({ type: 'success', text: 'Item deleted successfully!' });
       refreshUser();
     } catch (err: any) {
-      setMessage({ type: 'error', text: 'Failed to delete item.' });
+      console.error('Delete Error:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to delete item.';
+      setMessage({ type: 'error', text: String(errorMessage) });
     } finally {
       setLoading(false);
     }
   };
 
-  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -130,41 +156,37 @@ const ProfileForm: React.FC = () => {
       if (!user?.user_id) throw new Error('User not authenticated');
 
       let response;
+
+      // Validation
+      if (activeSection === 'education') {
+        const cgpaVal = parseFloat(eduData.cgpa);
+        const yearVal = parseInt(eduData.year_of_completion);
+        if (isNaN(cgpaVal) || cgpaVal < 0 || cgpaVal > 100) throw new Error("CGPA must be between 0 and 100.");
+        const currentYear = new Date().getFullYear();
+        if (isNaN(yearVal) || yearVal < 1950 || yearVal > currentYear + 10) throw new Error(`Year of completion must be between 1950 and ${currentYear + 10}.`);
+      }
+
+      // API Calls
       if (activeSection === 'education') {
         const payload = { user_id: user.user_id, ...eduData };
-        if (editingId) {
-          response = await api.put(`/api/education/${editingId}/`, payload);
-        } else {
-          response = await api.post(`/api/education/`, payload);
-        }
+        response = editingId ? await api.put(`/api/education/${editingId}/`, payload) : await api.post(`/api/education/`, payload);
       } else if (activeSection === 'certification') {
         const payload = { user_id: user.user_id, ...certData };
-        if (editingId) {
-          response = await api.put(`/api/certification/${editingId}/`, payload);
-        } else {
-          response = await api.post(`/api/certification/`, payload);
-        }
+        response = editingId ? await api.put(`/api/certification/${editingId}/`, payload) : await api.post(`/api/certification/`, payload);
       } else if (activeSection === 'skill') {
         const payload = { user_id: user.user_id, ...skillData };
         response = await api.post(`/api/skill/`, payload);
       } else if (activeSection === 'placement') {
         const payload = { user_id: user.user_id, ...placementData };
-        if (editingId) {
-          response = await api.put(`/api/placement/${editingId}/`, payload);
-        } else {
-          response = await api.post(`/api/placement/`, payload);
-        }
+        response = editingId ? await api.put(`/api/placement/${editingId}/`, payload) : await api.post(`/api/placement/`, payload);
       } else if (activeSection === 'password') {
-        if (passwordData.password !== passwordData.confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
+        if (passwordData.password !== passwordData.confirmPassword) throw new Error("Passwords do not match");
         response = await api.post(`/api/set-password/`, { password: passwordData.password });
       }
 
       if (response && (response.status === 200 || response.status === 201)) {
         setMessage({ type: 'success', text: 'Saved successfully!' });
         setEditingId(null);
-        // Reset forms
         setEduData({ degree: '', specialization: '', university: '', cgpa: '', year_of_completion: '' });
         setCertData({ cert_name: '', issuing_organization: '', issue_date: '' });
         setSkillData({ skill_name: '' });
@@ -181,219 +203,399 @@ const ProfileForm: React.FC = () => {
     }
   };
 
-  return (
-    <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto', mt: 4, borderRadius: 2 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">
-        Manage Profile
-      </Typography>
+  // --- Render Helpers ---
 
-      {/* Navigation Buttons */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {['education', 'certification', 'skill', 'placement', 'password'].map((section) => (
-          <Button
-            key={section}
-            variant={activeSection === section ? 'contained' : 'outlined'}
-            onClick={() => setActiveSection(section as any)}
-            sx={{ textTransform: 'capitalize' }}
-          >
-            {section === 'placement' ? 'Placement Status' : section}
-          </Button>
-        ))}
+  const renderEducationCard = (edu: any) => (
+    <Grid size={{ xs: 12, md: 6 }} key={edu.education_id}>
+      <Card variant="outlined" sx={{ height: '100%', borderRadius: 3, transition: '0.3s', '&:hover': { boxShadow: 3 } }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Avatar sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main }}>
+              <SchoolIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" component="div" fontWeight="bold">
+                {edu.degree}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {edu.specialization}
+              </Typography>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 1.5 }} />
+          <Box display="flex" flexDirection="column" gap={0.5}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <BusinessIcon fontSize="small" color="action" />
+              <Typography variant="body2">{edu.university}</Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <DateIcon fontSize="small" color="action" />
+              <Typography variant="body2">{edu.year_of_completion}</Typography>
+              <Chip icon={<GradeIcon fontSize='small' />} label={`CGPA: ${edu.cgpa}`} size="small" color="success" variant='outlined' sx={{ ml: 'auto' }} />
+            </Box>
+          </Box>
+        </CardContent>
+        <CardActions disableSpacing sx={{ justifyContent: 'flex-end', pt: 0 }}>
+          <IconButton size="small" onClick={() => handleEdit(edu, 'education')} color="primary"><EditIcon /></IconButton>
+          <IconButton size="small" onClick={() => handleDelete(edu.education_id, 'education')} color="error"><DeleteIcon /></IconButton>
+        </CardActions>
+      </Card>
+    </Grid>
+  );
+
+  const renderCertificationCard = (cert: any) => (
+    <Grid size={{ xs: 12, md: 6 }} key={cert.cert_id}>
+      <Card variant="outlined" sx={{ height: '100%', borderRadius: 3, transition: '0.3s', '&:hover': { boxShadow: 3 } }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Avatar sx={{ bgcolor: theme.palette.secondary.light, color: theme.palette.secondary.main }}>
+              <AwardIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight="bold">
+                {cert.cert_name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {cert.issuing_organization}
+              </Typography>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 1.5 }} />
+          <Box display="flex" alignItems="center" gap={1}>
+            <DateIcon fontSize="small" color="action" />
+            <Typography variant="body2">Issued: {cert.issue_date}</Typography>
+          </Box>
+        </CardContent>
+        <CardActions disableSpacing sx={{ justifyContent: 'flex-end', pt: 0 }}>
+          <IconButton size="small" onClick={() => handleEdit(cert, 'certification')} color="primary"><EditIcon /></IconButton>
+          <IconButton size="small" onClick={() => handleDelete(cert.cert_id, 'certification')} color="error"><DeleteIcon /></IconButton>
+        </CardActions>
+      </Card>
+    </Grid>
+  );
+
+  const renderPlacementCard = (placement: any) => (
+    <Grid size={{ xs: 12, md: 6 }} key={placement.placement_id}>
+      <Card variant="outlined" sx={{ height: '100%', borderRadius: 3, transition: '0.3s', '&:hover': { boxShadow: 3 } }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Avatar sx={{ bgcolor: theme.palette.success.light, color: theme.palette.success.main }}>
+              <WorkIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight="bold">
+                {placement.role}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {placement.company}
+              </Typography>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 1.5 }} />
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <DateIcon fontSize="small" /> Joined: {placement.date_of_joining}
+            </Typography>
+            <Chip label={placement.placement_type} size="small" color={placement.placement_type === 'Job' ? 'primary' : 'warning'} />
+          </Box>
+        </CardContent>
+        <CardActions disableSpacing sx={{ justifyContent: 'flex-end', pt: 0 }}>
+          <IconButton size="small" onClick={() => handleEdit(placement, 'placement')} color="primary"><EditIcon /></IconButton>
+          <IconButton size="small" onClick={() => handleDelete(placement.placement_id, 'placement')} color="error"><DeleteIcon /></IconButton>
+        </CardActions>
+      </Card>
+    </Grid>
+  );
+
+  const renderSkillChips = () => (
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, textAlign: 'center' }}>
+      <Box display="flex" justifyContent="center" flexWrap="wrap" gap={1.5}>
+        {user?.skills?.length > 0 ? user.skills.map((skill: any) => (
+          <Chip
+            key={skill.skill_id}
+            label={skill.skill_name}
+            onDelete={() => handleDelete(skill.skill_id, 'skill')}
+            color="primary"
+            variant="filled"
+            sx={{ px: 1, py: 0.5, fontSize: '0.95rem' }}
+          />
+        )) : (
+          <Typography color="text.secondary" fontStyle="italic">No skills added yet.</Typography>
+        )}
+      </Box>
+    </Paper>
+  );
+
+  return (
+    <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, mb: 10 }}>
+      {/* Header */}
+      <Box mb={4} textAlign="center">
+        <Typography variant="h4" fontWeight="800" gutterBottom sx={{
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: 1
+        }}>
+          My Profile
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          Manage your professional journey details
+        </Typography>
       </Box>
 
-      {message && <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>}
+      {/* Tabs */}
+      <Paper elevation={0} sx={{ borderRadius: 4, mb: 4, border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{ bgcolor: theme.palette.background.paper }}
+        >
+          <Tab icon={<SchoolIcon />} iconPosition="start" label="Education" />
+          <Tab icon={<AwardIcon />} iconPosition="start" label="Certifications" />
+          <Tab icon={<SkillIcon />} iconPosition="start" label="Skills" />
+          <Tab icon={<WorkIcon />} iconPosition="start" label="Detailed Placements" />
+          <Tab icon={<LockIcon />} iconPosition="start" label="Password" />
+        </Tabs>
+      </Paper>
 
-      {/* Existing Items List */}
-      {activeSection !== 'password' && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
-            Existing {activeSection === 'placement' ? 'Placements' : activeSection.charAt(0).toUpperCase() + activeSection.slice(1) + 's'}
-          </Typography>
-          <List dense sx={{ bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #eee' }}>
-            {activeSection === 'education' && user?.education?.map((edu: any) => (
-              <React.Fragment key={edu.education_id}>
-                <ListItem>
-                  <ListItemText
-                    primary={`${edu.degree} in ${edu.specialization}`}
-                    secondary={`${edu.university} (${edu.year_of_completion})`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton edge="end" onClick={() => handleEdit(edu, 'education')} sx={{ mr: 1 }}><EditIcon /></IconButton>
-                    <IconButton edge="end" onClick={() => handleDelete(edu.education_id, 'education')}><DeleteIcon /></IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-            {activeSection === 'certification' && user?.certifications?.map((cert: any) => (
-              <React.Fragment key={cert.cert_id}>
-                <ListItem>
-                  <ListItemText
-                    primary={cert.cert_name}
-                    secondary={`${cert.issuing_organization} - ${cert.issue_date}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton edge="end" onClick={() => handleEdit(cert, 'certification')} sx={{ mr: 1 }}><EditIcon /></IconButton>
-                    <IconButton edge="end" onClick={() => handleDelete(cert.cert_id, 'certification')}><DeleteIcon /></IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-            {activeSection === 'skill' && (
-              <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {user?.skills?.map((skill: any) => (
-                  <Chip
-                    key={skill.skill_id}
-                    label={skill.skill_name}
-                    onDelete={() => handleDelete(skill.skill_id, 'skill')}
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
-              </Box>
-            )}
-            {activeSection === 'placement' && user?.placements?.map((placement: any) => (
-              <React.Fragment key={placement.placement_id}>
-                <ListItem>
-                  <ListItemText
-                    primary={`${placement.role} at ${placement.company}`}
-                    secondary={`${placement.placement_type} - Joined: ${placement.date_of_joining}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton edge="end" onClick={() => handleEdit(placement, 'placement')} sx={{ mr: 1 }}><EditIcon /></IconButton>
-                    <IconButton edge="end" onClick={() => handleDelete(placement.placement_id, 'placement')}><DeleteIcon /></IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
-        </Box>
+      {/* Error / Success Messages */}
+      {message && (
+        <Fade in={!!message}>
+          <Alert severity={message.type} sx={{ mb: 3 }}>{message.text}</Alert>
+        </Fade>
       )}
 
-      {/* Add / Edit Form */}
-      <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
-        {editingId ? 'Edit Item' : activeSection === 'password' ? 'Change Password' : 'Add New Item'}
-      </Typography>
-
-      <form onSubmit={handleSubmit}>
+      {/* Content Section */}
+      <Box sx={{ minHeight: 100 }}>
         {activeSection === 'education' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <AsyncAutocomplete
-                label="Degree"
-                value={eduData.degree}
-                onChange={(val) => setEduData({ ...eduData, degree: val || '' })}
-                staticOptions={DEGREES}
-                required={!eduData.degree}
-              />
-              <AsyncAutocomplete
-                label="Specialization"
-                value={eduData.specialization}
-                onChange={(val) => setEduData({ ...eduData, specialization: val || '' })}
-                staticOptions={SPECIALIZATIONS}
-                required={!eduData.specialization}
-              />
-            </Box>
-            <GooglePlacesAutocomplete
-              value={eduData.university}
-              onChange={(newValue) => {
-                setEduData({ ...eduData, university: newValue || '' });
-              }}
-              onInputChange={(newInputValue) => {
-                setEduData({ ...eduData, university: newInputValue });
-              }}
-              label="University"
-              required={!eduData.university}
-            />
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <TextField sx={{ flex: 1 }} label="CGPA" name="cgpa" type="number" inputProps={{ step: "0.01" }} value={eduData.cgpa} onChange={handleEduChange} required />
-              <TextField sx={{ flex: 1 }} label="Year" name="year_of_completion" type="number" value={eduData.year_of_completion} onChange={handleEduChange} required />
-            </Box>
-          </Box>
+          <Grid container spacing={3}>
+            {user?.education?.map(renderEducationCard)}
+            {(!user?.education || user.education.length === 0) && (
+              <Grid size={12} textAlign="center" py={5}>
+                <Typography color="text.secondary">No education details added yet.</Typography>
+              </Grid>
+            )}
+          </Grid>
         )}
-
         {activeSection === 'certification' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <AsyncAutocomplete
-              label="Certification Name"
-              value={certData.cert_name}
-              onChange={(val) => setCertData({ ...certData, cert_name: val || '' })}
-              staticOptions={[]} // Pass empty list or specific cert list if available
-              required={!certData.cert_name}
-            />
-            <AsyncAutocomplete
-              label="Organization"
-              value={certData.issuing_organization}
-              onChange={(val) => setCertData({ ...certData, issuing_organization: val || '' })}
-              staticOptions={[]}
-              required={!certData.issuing_organization}
-            />
-            <TextField fullWidth label="Date" name="issue_date" type="date" InputLabelProps={{ shrink: true }} value={certData.issue_date} onChange={handleCertChange} required />
-          </Box>
+          <Grid container spacing={3}>
+            {user?.certifications?.map(renderCertificationCard)}
+            {(!user?.certifications || user.certifications.length === 0) && (
+              <Grid size={12} textAlign="center" py={5}>
+                <Typography color="text.secondary">No certifications added yet.</Typography>
+              </Grid>
+            )}
+          </Grid>
         )}
-
-        {activeSection === 'skill' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <AsyncAutocomplete
-              label="Skill Name"
-              value={skillData.skill_name}
-              onChange={(val) => setSkillData({ ...skillData, skill_name: val || '' })}
-              staticOptions={[]} // Could add common skills list here
-              required={!skillData.skill_name}
-            />
-          </Box>
-        )}
-
         {activeSection === 'placement' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <AsyncAutocomplete
-              label="Role / Job Title"
-              value={placementData.role}
-              onChange={(val) => setPlacementData({ ...placementData, role: val || '' })}
-              staticOptions={[]}
-              required={!placementData.role}
-            />
-            <AsyncAutocomplete
-              label="Company Name"
-              value={placementData.company}
-              onChange={(val) => setPlacementData({ ...placementData, company: val || '' })}
-              staticOptions={[]}
-              required={!placementData.company}
-            />
-            <TextField select fullWidth label="Type" name="placement_type" value={placementData.placement_type} onChange={handlePlacementChange} required>
-              <MenuItem value="Job">Job</MenuItem>
-              <MenuItem value="Internship">Internship</MenuItem>
-            </TextField>
-            <TextField fullWidth label="Date of Joining" name="date_of_joining" type="date" InputLabelProps={{ shrink: true }} value={placementData.date_of_joining} onChange={handlePlacementChange} required />
+          <Grid container spacing={3}>
+            {user?.placements?.map(renderPlacementCard)}
+            {(!user?.placements || user.placements.length === 0) && (
+              <Grid size={12} textAlign="center" py={5}>
+                <Typography color="text.secondary">No placement details added yet.</Typography>
+              </Grid>
+            )}
+          </Grid>
+        )}
+        {activeSection === 'skill' && (
+          <Box>
+            {renderSkillChips()}
+
           </Box>
         )}
+      </Box>
 
-        {activeSection === 'password' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField fullWidth label="New Password" name="password" type="password" value={passwordData.password} onChange={handlePasswordChange} required />
-            <TextField fullWidth label="Confirm Password" name="confirmPassword" type="password" value={passwordData.confirmPassword} onChange={handlePasswordChange} required />
+      {/* Add / Edit Form Section */}
+      <Box id="profile-form-anchor" mt={2}>
+        <Paper elevation={4} sx={{ p: 4, borderRadius: 4 }}>
+          <Box display="flex" alignItems="center" gap={1.5} mb={3}>
+            <Avatar sx={{ bgcolor: editingId ? theme.palette.warning.main : theme.palette.primary.main }}>
+              {editingId ? <EditIcon /> : <AddIcon />}
+            </Avatar>
+            <Typography variant="h6" fontWeight="bold">
+              {editingId ? 'Edit Item' : activeSection === 'password' ? 'Change Password' : `Add New ${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}`}
+            </Typography>
           </Box>
-        )}
 
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          {editingId && (
-            <Button variant="outlined" onClick={() => {
-              setEditingId(null);
-              setEduData({ degree: '', specialization: '', university: '', cgpa: '', year_of_completion: '' });
-              setCertData({ cert_name: '', issuing_organization: '', issue_date: '' });
-              setPlacementData({ role: '', company: '', placement_type: 'Job', date_of_joining: '' });
-            }}>
-              Cancel Edit
-            </Button>
-          )}
-          <Button type="submit" variant="contained" disabled={loading} sx={{ minWidth: 150 }}>
-            {loading ? <CircularProgress size={24} color="inherit" /> : (editingId ? 'Update' : 'Save')}
-          </Button>
-        </Box>
-      </form>
-    </Paper >
+          <form onSubmit={handleSubmit}>
+            {/* EDUCATION FORM */}
+            {activeSection === 'education' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Degree"
+                    value={eduData.degree}
+                    onChange={(val) => setEduData({ ...eduData, degree: val || '' })}
+                    staticOptions={DEGREES}
+                    apiEndpoint="/api/suggest/?type=degree"
+                    required={!eduData.degree}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Specialization/Major"
+                    staticOptions={
+                      eduData.degree && DEGREE_SPECIALIZATION_MAP[eduData.degree]
+                        ? DEGREE_SPECIALIZATION_MAP[eduData.degree]
+                        : SPECIALIZATIONS
+                    }
+                    value={eduData.specialization}
+                    onChange={(val) => setEduData({ ...eduData, specialization: val || '' })}
+                    apiEndpoint="/api/suggest/?type=specialization"
+                    context={degreeContext}
+                    required
+                  />          </Grid>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="University"
+                    value={eduData.university}
+                    onChange={(val) => setEduData({ ...eduData, university: val || '' })}
+                    apiEndpoint="/api/suggest/?type=university"
+                    staticOptions={[]}
+                    required={!eduData.university}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField fullWidth label="CGPA (0-100)" name="cgpa" type="number" inputProps={{ step: "0.01", min: 0, max: 100 }} value={eduData.cgpa} onChange={handleEduChange} required />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField fullWidth label="Year" name="year_of_completion" type="number" value={eduData.year_of_completion} onChange={handleEduChange} required />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* CERTIFICATION FORM */}
+            {activeSection === 'certification' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Certification Name"
+                    value={certData.cert_name}
+                    onChange={(val) => setCertData({ ...certData, cert_name: val || '' })}
+                    apiEndpoint="/api/suggest/?type=certification"
+                    staticOptions={[]}
+                    required={!certData.cert_name}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Issuing Organization"
+                    value={certData.issuing_organization}
+                    onChange={(val) => setCertData({ ...certData, issuing_organization: val || '' })}
+                    apiEndpoint="/api/suggest/?type=company"
+                    staticOptions={[]}
+                    required={!certData.issuing_organization}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField fullWidth label="Issue Date" name="issue_date" type="date" InputLabelProps={{ shrink: true }} value={certData.issue_date} onChange={handleCertChange} required />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* SKILL FORM */}
+            {activeSection === 'skill' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Skill Name"
+                    value={skillData.skill_name}
+                    onChange={(val) => setSkillData({ ...skillData, skill_name: val || '' })}
+                    apiEndpoint="/api/suggest/?type=skill"
+                    staticOptions={[]}
+                    required={!skillData.skill_name}
+                  />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* PLACEMENT FORM */}
+            {activeSection === 'placement' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Role / Job Title"
+                    value={placementData.role}
+                    onChange={(val) => setPlacementData({ ...placementData, role: val || '' })}
+                    apiEndpoint="/api/suggest/?type=role"
+                    staticOptions={[]}
+                    required={!placementData.role}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <AsyncAutocomplete
+                    label="Company Name"
+                    value={placementData.company}
+                    onChange={(val) => setPlacementData({ ...placementData, company: val || '' })}
+                    apiEndpoint="/api/suggest/?type=company"
+                    staticOptions={[]}
+                    required={!placementData.company}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField select fullWidth label="Type" name="placement_type" value={placementData.placement_type} onChange={handlePlacementChange} required>
+                    <MenuItem value="Job">Job</MenuItem>
+                    <MenuItem value="Internship">Internship</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField fullWidth label="Date of Joining" name="date_of_joining" type="date" InputLabelProps={{ shrink: true }} value={placementData.date_of_joining} onChange={handlePlacementChange} required />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* PASSWORD FORM */}
+            {activeSection === 'password' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <TextField fullWidth label="New Password" name="password" type="password" value={passwordData.password} onChange={handlePasswordChange} required />
+                </Grid>
+                <Grid size={12}>
+                  <TextField fullWidth label="Confirm Password" name="confirmPassword" type="password" value={passwordData.confirmPassword} onChange={handlePasswordChange} required />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* ACTION BUTTONS */}
+            <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+              {editingId && (
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<CancelIcon />}
+                  onClick={() => {
+                    setEditingId(null);
+                    setEduData({ degree: '', specialization: '', university: '', cgpa: '', year_of_completion: '' });
+                    setCertData({ cert_name: '', issuing_organization: '', issue_date: '' });
+                    setPlacementData({ role: '', company: '', placement_type: 'Job', date_of_joining: '' });
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                sx={{
+                  minWidth: 140,
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                  boxShadow: 3
+                }}
+              >
+                {editingId ? 'Update Item' : activeSection === 'password' ? 'Update Password' : 'Save Item'}
+              </Button>
+            </Box>
+          </form>
+        </Paper>
+      </Box>
+    </Box>
   );
 };
 

@@ -40,6 +40,15 @@ export default function GooglePlacesAutocomplete({
     const [inputValue, setInputValue] = React.useState('');
     const [options, setOptions] = React.useState<readonly PlaceType[]>([]);
 
+    React.useEffect(() => {
+        if (!(window as any).google || !(window as any).google.maps || !(window as any).google.maps.places) {
+            // Check if it loads after a short delay (e.g. invalid key might prevent it, or slow network)
+            // For now just set a flag if we try to use it and it fails, or check initially?
+            // Since script is async, it might not be ready yet.
+            // We can assume it's loading, but if we try to fetch and it's not there, we show error.
+        }
+    }, []);
+
     const autocompleteService = React.useRef<any>(null);
 
     const fetch = React.useMemo(
@@ -127,7 +136,12 @@ export default function GooglePlacesAutocomplete({
                 onInputChange(newInputValue);
             }}
             renderInput={(params) => (
-                <TextField {...params} label={label} fullWidth required={required} />
+                <TextField
+                    {...params}
+                    label={label}
+                    fullWidth
+                    required={required}
+                />
             )}
             renderOption={(props, option) => {
                 const { key, ...optionProps } = props;

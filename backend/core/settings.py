@@ -8,9 +8,14 @@ import os
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 # SECURITY: In production, do not keep this hardcoded!
 SECRET_KEY = 'django-insecure-dev-key-change-this-in-production'
 GOOGLE_CLIENT_ID = '463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com'
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 DEBUG = True
 
 # Allow all hosts for dev tunnels
