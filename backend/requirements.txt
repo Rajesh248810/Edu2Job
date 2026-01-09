@@ -1,0 +1,16 @@
+Django>=4.2,<5.3
+djangorestframework
+django-cors-headers
+djangorestframework-simplejwt
+python-dotenv
+dj-database-url
+psycopg2-binary
+whitenoise
+gunicorn
+google-generativeai
+Pillow
+requests
+pandas
+scikit-learn
+joblib
+numpy
