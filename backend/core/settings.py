@@ -2,8 +2,9 @@
 Django settings for core project.
 """
 
-from pathlib import Path
 import os
+import dj_database_url
+from pathlib import Path
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,13 +14,15 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY: In production, do not keep this hardcoded!
-SECRET_KEY = 'django-insecure-dev-key-change-this-in-production'
+# SECURITY: In production, do not keep this hardcoded!
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-this-in-production')
 GOOGLE_CLIENT_ID = '463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # Allow all hosts for dev tunnels
-ALLOWED_HOSTS = ['*']
+# Allow all hosts for dev tunnels
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -42,6 +45,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', # Must be at the top
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,16 +76,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
+# Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'EDU2JOB',
-        'USER': 'root',
-        'PASSWORD': 'rAJESHP4558@x',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    DATABASES['default'] = dj_database_url.config(default=database_url, conn_max_age=600)
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,6 +104,8 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Media Files (Uploads)
@@ -108,7 +115,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # --- API & REACT CONFIGURATION ---
 
 # 1. CORS: Allow React (Port 5173) to talk to Django
-CORS_ALLOW_ALL_ORIGINS = True
+# 1. CORS: Allow React (Port 5173) to talk to Django
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
 CORS_ALLOW_CREDENTIALS = True
 from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -122,11 +130,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 # ]
 
 # 2. CSRF: Trusted Origins for Dev Tunnels
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173',
-    'https://*.devtunnels.ms',
-    'https://*.inc1.devtunnels.ms',
-]
+# 2. CSRF: Trusted Origins for Dev Tunnels
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,https://*.devtunnels.ms').split(',')
 
 # 3. DRF: Use JWT Tokens instead of Sessions
 REST_FRAMEWORK = {
