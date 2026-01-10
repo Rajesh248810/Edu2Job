@@ -128,10 +128,11 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'authorization',
 ]
 # If you want to be specific:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-#     "https://*.devtunnels.ms",
-# ]
+cors_allowed_origins_env = os.getenv('CORS_ALLOWED_ORIGINS')
+if cors_allowed_origins_env:
+    CORS_ALLOWED_ORIGINS = cors_allowed_origins_env.split(',')
+else:
+    CORS_ALLOWED_ORIGINS = []
 
 # 2. CSRF: Trusted Origins for Dev Tunnels
 # 2. CSRF: Trusted Origins for Dev Tunnels
