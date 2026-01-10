@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'education',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'predictionhistory',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'App User',
                 'verbose_name_plural': 'App Users',
                 'db_table': 'user',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
