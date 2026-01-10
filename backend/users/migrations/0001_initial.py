@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'adminlogs',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'certification',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
