@@ -11,16 +11,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(
-            state_operations=[
-                migrations.AddField(
-                    model_name='education',
-                    name='user',
-                    field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='users.user'),
-                    preserve_default=False,
-                ),
-            ],
-            database_operations=[],
+        migrations.AddField(
+            model_name='education',
+            name='user',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='users.user'),
+            preserve_default=False,
         ),
         migrations.AlterField(
             model_name='education',
