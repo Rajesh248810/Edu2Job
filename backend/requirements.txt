@@ -16,3 +16,4 @@ joblib
 numpy
 PyMySQL
 cryptography
+grpcio
