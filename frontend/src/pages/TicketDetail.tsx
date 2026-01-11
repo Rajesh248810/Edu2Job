@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, TextField, Button, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../auth/AuthContext';
@@ -32,7 +32,6 @@ interface Ticket {
 const TicketDetail: React.FC = () => {
     const { ticketId } = useParams<{ ticketId: string }>();
     const { user, token } = useAuth();
-    const navigate = useNavigate();
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [chats, setChats] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
