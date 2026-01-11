@@ -5,12 +5,14 @@ from .views import (
     GoogleLoginView, SetPasswordView, UserListView, PublicProfileView, UserProfileUpdateView,
     PredictJobView, PlacedStudentsView, SubscribeView,
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
-    AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView
+    AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView,
+    SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet
 )
 
 from .admin_views import (
     AdminUserListView, AdminUserDetailView, AdminLogsView, AdminAnalyticsView, 
-    AdminModelView, AdminUniversityDetailView, AdminPredictionLogListView, AdminPredictionLogDetailView, AdminFeedbackView
+    AdminModelView, AdminUniversityDetailView, AdminPredictionLogListView, AdminPredictionLogDetailView, AdminFeedbackView,
+    AdminTicketView
 )
 
 router = DefaultRouter()
@@ -18,6 +20,10 @@ router.register(r'education', EducationViewSet)
 router.register(r'certification', CertificationViewSet)
 router.register(r'skill', SkillViewSet)
 router.register(r'placement', JobPlacementViewSet)
+router.register(r'support-tickets', SupportTicketViewSet)
+router.register(r'ticket-chats', TicketChatViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'chat-reports', ChatReportViewSet)
 
 
 urlpatterns = [
@@ -46,6 +52,9 @@ urlpatterns = [
     path('subscribe/', SubscribeView.as_view(), name='subscribe'),
     path('suggest/', AutocompleteView.as_view(), name='autocomplete'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
+    path('feedback/', FeedbackView.as_view(), name='feedback'),
     path('debug-status/', DebugStatusView.as_view(), name='debug_status'),
     path('admin/feedback/', AdminFeedbackView.as_view(), name='admin_feedback'),
+    path('admin/support-tickets/', AdminTicketView.as_view(), name='admin_ticket_list'),
+    path('admin/support-tickets/<int:pk>/', AdminTicketView.as_view(), name='admin_ticket_detail'),
 ] + router.urls

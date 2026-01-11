@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User, Adminlogs, Education, Predictionhistory, TrainingData, Feedback
+from .models import User, Adminlogs, Education, Predictionhistory, TrainingData, Feedback, SupportTicket
 from .serializers import UserSerializer
 from django.db.models import Count
 import datetime
@@ -572,3 +572,43 @@ class AdminFeedbackView(APIView):
             return Response({'message': f'{deleted_count} feedback items deleted successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminTicketView(APIView):
+    """
+    GET: List all support tickets
+    PATCH: Update ticket status
+    """
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            tickets = SupportTicket.objects.select_related('user').order_by('-created_at')
+            data = []
+            for t in tickets:
+                data.append({
+                    'ticket_id': t.ticket_id,
+                    'user_name': t.user.name,
+                    'user_email': t.user.email,
+                    'subject': t.subject,
+                    'message': t.message,
+                    'status': t.status,
+                    'created_at': t.created_at
+                })
+            return Response(data)
+        except Exception as e:
+             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request, pk):
+        try:
+            ticket = SupportTicket.objects.get(pk=pk)
+            status_update = request.data.get('status')
+            
+            if status_update in ['Open', 'In Progress', 'Resolved']:
+                ticket.status = status_update
+                ticket.save()
+                return Response({'message': f'Ticket status updated to {status_update}'})
+            
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+        except SupportTicket.DoesNotExist:
+             return Response({'error': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)

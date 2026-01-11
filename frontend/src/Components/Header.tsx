@@ -12,8 +12,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useThemeContext } from '../theme/ThemeContext';
-import { NAV_ITEMS } from '../config';
-import { API_BASE_URL } from '../config';
+import { NAV_ITEMS, API_BASE_URL } from '../config';
+import NotificationBell from './NotificationBell';
 
 interface HeaderProps {
     onDrawerToggle?: () => void;
@@ -44,6 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
 
     const navItems = [
         { label: 'Home', path: '/' },
+        { label: 'Help Center', path: '/help-center' },
         ...(user ? NAV_ITEMS : [])
     ];
 
@@ -103,6 +104,9 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
                         <IconButton onClick={toggleTheme} sx={{ ml: 1, color: textColor }}>
                             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
                         </IconButton>
+
+                        {/* Notification Bell */}
+                        {user && <NotificationBell sx={{ color: textColor }} />}
 
                         {user ? (
                             <>

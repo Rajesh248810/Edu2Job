@@ -66,3 +66,23 @@ class EncryptionUtil:
         except Exception as e:
             print(f"Decryption Error: {e}")
             return str(data) # Return raw if decryption fails (e.g. legacy clear text)
+
+def create_notification(user, message, type='system'):
+    """
+    Creates a notification for the user and enforces a maximum limit of 4 notifications.
+    Deletes oldest notifications if the limit is exceeded.
+    """
+    from .models import Notification
+    
+    # Create the new notification
+    Notification.objects.create(user=user, message=message, type=type)
+    
+    # Enforce limit of 4
+    # Get all notifications for user ordered by newest first
+    notifications = Notification.objects.filter(user=user).order_by('-created_at')
+    
+    if notifications.count() > 4:
+        # Keep the 4 newest, delete the rest
+        # We use list slicing on values_list to safely get IDs to keep
+        ids_to_keep = list(notifications.values_list('notification_id', flat=True)[:4])
+        Notification.objects.filter(user=user).exclude(notification_id__in=ids_to_keep).delete()

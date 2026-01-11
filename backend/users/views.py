@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
-from .models import User, Education, Certification, Skill, JobPlacement, Predictionhistory, Feedback
-from .serializers import UserSerializer, EducationSerializer, CertificationSerializer, SkillSerializer, JobPlacementSerializer
+from .models import User, Education, Certification, Skill, JobPlacement, Predictionhistory, Feedback, SupportTicket, TicketChat, Notification, ChatReport
+from .serializers import UserSerializer, EducationSerializer, CertificationSerializer, SkillSerializer, JobPlacementSerializer, SupportTicketSerializer, TicketChatSerializer, NotificationSerializer, ChatReportSerializer
 import jwt, datetime
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -45,6 +45,14 @@ class RegisterView(APIView):
                 'iat': datetime.datetime.utcnow()
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+            
+            # Welcome Notification
+            create_notification(
+                user=user,
+                message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
+                type='welcome'
+            )
+
             serializer = UserSerializer(user)
             return Response({'message': 'Registration Successful', 'token': token, 'user': serializer.data}, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -443,6 +451,107 @@ class FeedbackView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class SupportTicketViewSet(viewsets.ModelViewSet):
+    queryset = SupportTicket.objects.all()
+    serializer_class = SupportTicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return SupportTicket.objects.all().order_by('-created_at')
+        return SupportTicket.objects.filter(user=user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Admin can create tickets on behalf of users (Outbound Support)
+        if user.role == 'admin':
+            target_user_id = self.request.data.get('target_user_id')
+            if target_user_id:
+                try:
+                    target_user = User.objects.get(user_id=target_user_id)
+                    serializer.save(user=target_user)
+                    
+                    # Notify User about the new ticket from Support
+                    create_notification(
+                        user=target_user,
+                        message=f"Support Team created a new ticket: {serializer.validated_data.get('subject')}",
+                        type='ticket_create'
+                    )
+                    return
+                except User.DoesNotExist:
+                     pass # Fallback to creating for admin (or error)
+        
+        serializer.save(user=user)
+
+class TicketChatViewSet(viewsets.ModelViewSet):
+    queryset = TicketChat.objects.all()
+    serializer_class = TicketChatSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Filter by ticket ID if provided in query params
+        ticket_id = self.request.query_params.get('ticket_id')
+        if ticket_id:
+            # Check if user has access to this ticket
+            try:
+                ticket = SupportTicket.objects.get(ticket_id=ticket_id)
+                if self.request.user.role == 'admin' or ticket.user == self.request.user:
+                    return TicketChat.objects.filter(ticket_id=ticket_id).order_by('timestamp')
+            except SupportTicket.DoesNotExist:
+                return TicketChat.objects.none()
+        return TicketChat.objects.none() # Don't return all chats by default
+
+    def perform_create(self, serializer):
+        ticket_id = self.request.data.get('ticket')
+        ticket = SupportTicket.objects.get(ticket_id=ticket_id)
+        
+        # Verify permission
+        if self.request.user.role != 'admin' and ticket.user != self.request.user:
+             raise permissions.PermissionDenied("You do not have permission to chat on this ticket.")
+
+        serializer.save(sender=self.request.user, ticket=ticket)
+
+        # Notify the other party
+        is_admin = self.request.user.role == 'admin'
+        recipient = ticket.user if is_admin else None # If logic for admin notifications is needed, it's more complex (which admin?)
+        
+        if recipient and is_admin:
+            # Notify User
+            create_notification(
+                user=recipient,
+                message=f"Support Agent replied to your ticket: {ticket.subject}",
+                type='ticket_reply'
+            )
+        elif not is_admin:
+             # Notify Admin (Just conceptually, or if we had a specific admin assigned)
+             pass
+
+    def perform_destroy(self, instance):
+        if self.request.user.role == 'admin' or instance.sender == self.request.user:
+            instance.delete()
+        else:
+             raise permissions.PermissionDenied("You can only delete your own messages.")
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def perform_update(self, serializer):
+        # Allow marking as read
+        serializer.save()
+
+class ChatReportViewSet(viewsets.ModelViewSet):
+    queryset = ChatReport.objects.all()
+    serializer_class = ChatReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(reported_by=self.request.user)
+
 class DebugStatusView(APIView):
     permission_classes = [permissions.AllowAny] # Public access for debugging
     def get(self, request):
@@ -463,7 +572,7 @@ class DebugStatusView(APIView):
             status_info["dir_contents"] = os.listdir(base_dir)
         except Exception as e:
             status_info["dir_contents"] = f"Error: {str(e)}"
-            
+        
         try:
             ml_models_dir = os.path.join(base_dir, 'ml_models')
             if os.path.exists(ml_models_dir):
@@ -479,7 +588,7 @@ class DebugStatusView(APIView):
                 status_info["model_load_status"] = "Success"
                 status_info["classes"] = list(clf.classes_)
             else:
-                 status_info["model_load_status"] = "File missing"
+                status_info["model_load_status"] = "File missing"
         except Exception as e:
              status_info["model_load_status"] = f"Failed: {str(e)}"
              

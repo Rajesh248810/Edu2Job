@@ -8,6 +8,7 @@ class User(models.Model):
     role = models.CharField(max_length=20)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     banner_image = models.ImageField(upload_to='banners/', blank=True, null=True)
+    about_me = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -130,3 +131,56 @@ class Feedback(models.Model):
     class Meta:
         managed = True
         db_table = 'feedback'
+
+
+class SupportTicket(models.Model):
+    ticket_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    status = models.CharField(
+        max_length=20, 
+        choices=[('Open', 'Open'), ('In Progress', 'In Progress'), ('Resolved', 'Resolved')],
+        default='Open'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'support_tickets'
+
+class TicketChat(models.Model):
+    chat_id = models.AutoField(primary_key=True)
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='chats')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'ticket_chats'
+
+class Notification(models.Model):
+    notification_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    type = models.CharField(max_length=50, default='system')
+
+    class Meta:
+        managed = True
+        db_table = 'notifications'
+
+class ChatReport(models.Model):
+    report_id = models.AutoField(primary_key=True)
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_submitted')
+    chat_message = models.ForeignKey(TicketChat, on_delete=models.CASCADE, related_name='reports')
+    reason = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='Pending') # Pending, Reviewed, Dismissed
+
+    class Meta:
+        managed = True
+        db_table = 'chat_reports'

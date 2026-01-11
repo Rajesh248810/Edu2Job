@@ -60,11 +60,14 @@ import {
     School as SchoolIcon,
     Verified as VerifiedIcon,
     ArrowBack as ArrowBackIcon,
-    FactCheck as FeedbackIcon
+    FactCheck as FeedbackIcon,
+    SupportAgent as SupportAgentIcon,
+    Message as MessageIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import PredictionLogTable from '../Components/PredictionLogTable';
 import FeedbackTable from '../Components/FeedbackTable';
+import NotificationBell from '../Components/NotificationBell';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useThemeContext } from '../theme/ThemeContext';
@@ -133,6 +136,16 @@ interface UserProfile {
     certifications: Certification[];
 }
 
+interface SupportTicket {
+    ticket_id: number;
+    user_name: string;
+    user_email: string;
+    subject: string;
+    message: string;
+    status: 'Open' | 'In Progress' | 'Resolved';
+    created_at: string;
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const AdminDashboard: React.FC = () => {
@@ -181,6 +194,7 @@ const AdminDashboard: React.FC = () => {
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
     const [studentProfile, setStudentProfile] = useState<UserProfile | null>(null);
     const [feedbackTableVersion, setFeedbackTableVersion] = useState(0);
+    const [tickets, setTickets] = useState<SupportTicket[]>([]);
 
     useEffect(() => {
         if (!user || user.role !== 'admin') {
@@ -267,6 +281,7 @@ const AdminDashboard: React.FC = () => {
         if (newValue === 1) fetchUsers();
         if (newValue === 3) fetchLogs();
         if (newValue === 0) fetchAnalytics();
+        if (newValue === 6) fetchTickets();
     };
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -477,11 +492,60 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    // --- Support Ticket Actions ---
+    const fetchTickets = async () => {
+        try {
+            const res = await api.get(`${API_BASE_URL}/api/admin/support-tickets/`);
+            setTickets(res.data);
+        } catch (err) {
+            console.error("Failed to fetch tickets", err);
+        }
+    };
+
+    const handleTicketStatusChange = async (id: number, newStatus: string) => {
+        try {
+            await api.patch(`${API_BASE_URL}/api/admin/support-tickets/${id}/`, { status: newStatus });
+            setTickets(tickets.map(t => t.ticket_id === id ? { ...t, status: newStatus as any } : t));
+            setSuccessMsg("Ticket status updated");
+        } catch (err) {
+            setError("Failed to update ticket status");
+        }
+    };
+
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
     };
 
+    // --- Outbound Support ---
+    const [contactDialogOpen, setContactDialogOpen] = useState(false);
+    const [contactTargetUser, setContactTargetUser] = useState<any>(null);
+    const [contactSubject, setContactSubject] = useState('');
+    const [contactMessage, setContactMessage] = useState('');
 
+    const handleOpenContact = (user: any) => {
+        setContactTargetUser(user);
+        setContactDialogOpen(true);
+    };
+
+    const handleSendContact = async () => {
+        if (!contactTargetUser || !contactSubject || !contactMessage) return;
+        try {
+            const res = await api.post(`${API_BASE_URL}/api/support-tickets/`, {
+                target_user_id: contactTargetUser.user_id,
+                subject: contactSubject,
+                message: contactMessage
+            });
+            setSuccessMsg("Ticket created! Redirecting to chat...");
+            setContactDialogOpen(false);
+            setContactSubject('');
+            setContactMessage('');
+            // Optional: Navigate to chat
+            navigate(`/tickets/${res.data.ticket_id}`);
+        } catch (err) {
+            console.error("Failed to create ticket", err);
+            setError("Failed to create ticket");
+        }
+    };
 
     if (!user) return null;
 
@@ -510,6 +574,7 @@ const AdminDashboard: React.FC = () => {
                             Welcome, {user.name}
                         </Typography>
                     )}
+                    <NotificationBell />
                     <IconButton sx={{ ml: 1, mr: 2 }} onClick={toggleTheme} color="inherit">
                         {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
                     </IconButton>
@@ -614,6 +679,7 @@ const AdminDashboard: React.FC = () => {
                                     <Tab icon={<SecurityIcon />} label="System Logs" />
                                     <Tab icon={<FeedbackIcon />} label="Prediction Logs" />
                                     <Tab icon={<FeedbackIcon />} label="User Feedback" />
+                                    <Tab icon={<SupportAgentIcon />} label="Support Tickets" />
                                 </Tabs>
                             </Paper>
                         )}
@@ -805,6 +871,9 @@ const AdminDashboard: React.FC = () => {
                                                                     </FormControl>
                                                                 </TableCell>
                                                                 <TableCell align="right">
+                                                                    <IconButton color="primary" onClick={() => handleOpenContact(u)} title="Contact User">
+                                                                        <MessageIcon />
+                                                                    </IconButton>
                                                                     <IconButton color="error" onClick={() => handleDeleteUser(u.user_id)}>
                                                                         <DeleteIcon />
                                                                     </IconButton>
@@ -1150,6 +1219,84 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </motion.div>
                                 )}
+
+                                {/* --- TAB 6: SUPPORT TICKETS --- */}
+                                {tabValue === 6 && (
+                                    <motion.div
+                                        key="tickets"
+                                        variants={tabVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+                                                <Typography variant="h6" fontWeight="bold">Support Tickets</Typography>
+                                                <Button startIcon={<RefreshIcon />} onClick={fetchTickets}>Refresh</Button>
+                                            </Box>
+                                            <TableContainer>
+                                                <Table>
+                                                    <TableHead>
+                                                        <TableRow>
+                                                            <TableCell>ID</TableCell>
+                                                            <TableCell>User</TableCell>
+                                                            <TableCell>Subject</TableCell>
+                                                            <TableCell>Status</TableCell>
+                                                            <TableCell>Date</TableCell>
+                                                            <TableCell>Actions</TableCell>
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {tickets.length > 0 ? tickets.map((ticket) => (
+                                                            <TableRow key={ticket.ticket_id}>
+                                                                <TableCell>{ticket.ticket_id}</TableCell>
+                                                                <TableCell>
+                                                                    <Typography variant="subtitle2">{ticket.user_name}</Typography>
+                                                                    <Typography variant="caption" color="text.secondary">{ticket.user_email}</Typography>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Typography variant="subtitle2">{ticket.subject}</Typography>
+                                                                    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                        {ticket.message}
+                                                                    </Typography>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Chip
+                                                                        label={ticket.status}
+                                                                        color={ticket.status === 'Resolved' ? 'success' : ticket.status === 'In Progress' ? 'warning' : 'error'}
+                                                                        size="small"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell>{new Date(ticket.created_at).toLocaleDateString()}</TableCell>
+                                                                <TableCell>
+                                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                                        <Button variant="outlined" size="small" onClick={() => navigate(`/tickets/${ticket.ticket_id}`)}>
+                                                                            Chat
+                                                                        </Button>
+                                                                        <Select
+                                                                            size="small"
+                                                                            value={ticket.status}
+                                                                            onChange={(e) => handleTicketStatusChange(ticket.ticket_id, e.target.value)}
+                                                                            sx={{ minWidth: 120 }}
+                                                                        >
+                                                                            <MenuItem value="Open">Open</MenuItem>
+                                                                            <MenuItem value="In Progress">In Progress</MenuItem>
+                                                                            <MenuItem value="Resolved">Resolved</MenuItem>
+                                                                        </Select>
+                                                                    </Box>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )) : (
+                                                            <TableRow>
+                                                                <TableCell colSpan={6} align="center">No tickets found.</TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+                                        </Paper>
+                                    </motion.div>
+                                )}
                             </AnimatePresence>
                         </Box>
                     </>
@@ -1212,6 +1359,37 @@ const AdminDashboard: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Contact User Dialog */}
+            <Dialog open={contactDialogOpen} onClose={() => setContactDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Contact {contactTargetUser?.name}</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 1 }}>
+                        <TextField
+                            label="Subject"
+                            fullWidth
+                            margin="normal"
+                            value={contactSubject}
+                            onChange={(e) => setContactSubject(e.target.value)}
+                        />
+                        <TextField
+                            label="Message"
+                            fullWidth
+                            multiline
+                            rows={4}
+                            margin="normal"
+                            value={contactMessage}
+                            onChange={(e) => setContactMessage(e.target.value)}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setContactDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleSendContact} disabled={!contactSubject || !contactMessage}>
+                        Create Ticket & Chat
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>

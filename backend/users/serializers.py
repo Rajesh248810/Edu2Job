@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Education, Certification, Predictionhistory, Skill, JobPlacement
+from .models import User, Education, Certification, Predictionhistory, Skill, JobPlacement, SupportTicket, TicketChat, Notification, ChatReport
 
 # 1. Serializer for Education Data
 from .utils import EncryptionUtil
@@ -91,6 +91,61 @@ class PredictionSerializer(serializers.ModelSerializer):
         model = Predictionhistory
         fields = ['predicted_roles', 'confidence_scores', 'timestamp']
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        
+        def parse_field(value):
+            if isinstance(value, str):
+                import json
+                import ast
+                # 1. Try JSON (handling single quotes check first)
+                try:
+                    # If it starts with [ and contains ', try replacing ' with " ONLY if not part of a word?
+                    # The simple replace("'", '"') is risky for "Developer's". 
+                    # Let's try ast.literal_eval first for Python list strings, it is safer for ['a', 'b']
+                    return ast.literal_eval(value)
+                except:
+                    pass
+
+                try:
+                    return json.loads(value)
+                except:
+                    pass
+                
+                try:
+                     # Attempt to fix single quotes for JSON if ast failed
+                     return json.loads(value.replace("'", '"'))
+                except:
+                    pass
+
+                # 2. If it is a plain string but not a list representation
+                if value.strip() and not value.strip().startswith('['):
+                    return [value.strip()]
+                
+                # 3. If it starts with [ but failed parsing, return empty or raw?
+                # Let's return raw string if we can't parse, but better to return empty list to avoid frontend crash
+                return [] 
+            return value
+
+        ret['predicted_roles'] = parse_field(ret['predicted_roles'])
+        
+        # confidence scores might be dict or list
+        # For simplicity, let's just try to parse it, if plain string return as is or in list?
+        # Confidence scores are complex. Let's just try basic parse.
+        cs = ret['confidence_scores']
+        if isinstance(cs, str):
+            try:
+                import ast
+                ret['confidence_scores'] = ast.literal_eval(cs)
+            except:
+                try:
+                     import json
+                     ret['confidence_scores'] = json.loads(cs.replace("'", '"'))
+                except:
+                     pass
+
+        return ret
+
 # 4. Serializer for Skills
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
@@ -103,6 +158,31 @@ class JobPlacementSerializer(serializers.ModelSerializer):
         model = JobPlacement
         fields = ['placement_id', 'role', 'company', 'placement_type', 'date_of_joining']
 
+# 6. Serializer for Support Tickets
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = ['ticket_id', 'subject', 'message', 'status', 'created_at']
+        read_only_fields = ['created_at']
+
+# 7. Chat and Notification Serializers
+
+
+class TicketChatSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.name', read_only=True)
+    sender_role = serializers.CharField(source='sender.role', read_only=True)
+
+    class Meta:
+        model = TicketChat
+        fields = ['chat_id', 'ticket', 'sender', 'sender_name', 'sender_role', 'message', 'timestamp', 'is_read']
+        read_only_fields = ['timestamp', 'sender', 'ticket']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['notification_id', 'message', 'is_read', 'created_at', 'type']
+        read_only_fields = ['created_at']
+
 # 6. Main User Serializer (Combines everything)
 class UserSerializer(serializers.ModelSerializer):
     # This fetches the related data automatically!
@@ -112,8 +192,19 @@ class UserSerializer(serializers.ModelSerializer):
     predictions = PredictionSerializer(many=True, source='predictionhistory_set', read_only=True)
     skills = SkillSerializer(many=True, read_only=True)
     placements = JobPlacementSerializer(many=True, read_only=True)
+    # Assuming we might want to send unread notifications count or something, but let's keep it simple for now
+
 
     class Meta:
         model = User
-        fields = ['user_id', 'name', 'email', 'role', 'education', 'certifications', 'predictions', 'skills', 'placements', 'profile_picture', 'banner_image']
+        fields = ['user_id', 'name', 'email', 'role', 'education', 'certifications', 'predictions', 'skills', 'placements', 'profile_picture', 'banner_image', 'about_me']
+
+class ChatReportSerializer(serializers.ModelSerializer):
+    reported_by_name = serializers.CharField(source='reported_by.name', read_only=True)
+    chat_message_content = serializers.CharField(source='chat_message.message', read_only=True)
+
+    class Meta:
+        model = ChatReport
+        fields = ['report_id', 'reported_by', 'reported_by_name', 'chat_message', 'chat_message_content', 'reason', 'timestamp', 'status']
+        read_only_fields = ['timestamp']
 

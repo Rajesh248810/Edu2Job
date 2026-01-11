@@ -17,6 +17,13 @@ const PublicProfile = lazy(() => import('./pages/PublicProfile'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const HelpCenter = lazy(() => import('./pages/resources/HelpCenter'));
+const FAQ = lazy(() => import('./pages/resources/FAQ'));
+const Documentation = lazy(() => import('./pages/resources/Documentation'));
+const Blog = lazy(() => import('./pages/resources/Blog'));
+const TicketDetail = lazy(() => import('./pages/TicketDetail'));
+const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'));
+const VerificationPage = lazy(() => import('./pages/VerificationPage'));
 
 const Loading = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -37,6 +44,11 @@ function App() {
             <Route path="/register" element={<HomePage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/documentation" element={<Documentation />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/verify/:userId" element={<VerificationPage />} />
           </Route>
 
           {/* Protected App Routes - Uses Dashboard Layout */}
@@ -47,6 +59,9 @@ function App() {
               <Route path="/profile/:userId" element={<PublicProfile />} />
               <Route path="/predictor" element={<JobPredictor />} />
               <Route path="/community" element={<CommunityPage />} />
+              <Route path="/community" element={<CommunityPage />} />
+              <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+              <Route path="/resume" element={<ResumeBuilder />} />
             </Route>
 
             {/* Admin Dashboard - Standalone Layout */}

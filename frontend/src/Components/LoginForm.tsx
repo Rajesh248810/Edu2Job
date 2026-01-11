@@ -1,29 +1,52 @@
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useState } from 'react';
+import { Box, Button, TextField, Alert, CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../auth/AuthContext';
+import { API_BASE_URL } from '../config';
+import { GoogleLogin } from '@react-oauth/google';
+
+// Styles
+const textFieldStyle = {
+  mb: 2,
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: 'rgba(0, 0, 0, 0.23)',
+    },
+    '&:hover fieldset': {
+      borderColor: '#667eea',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#667eea',
+    },
+  },
+};
+
+const submitButtonStyle = {
+  mt: 2,
+  mb: 2,
+  bgcolor: '#667eea',
+  '&:hover': {
+    bgcolor: '#5a6fd1',
+  },
+  py: 1.5,
+  borderRadius: 2,
+  fontSize: '1rem',
+  textTransform: 'none',
+  boxShadow: '0 4px 6px rgba(102, 126, 234, 0.25)',
+};
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Use a fallback key for development if env var is missing (TEST KEY ONLY)
-  // This test key works on localhost
-  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    // Check Captcha if simple password check is passed (or check before)
-    if (!captchaToken && email !== 'admin@test.com') {
-      setError("Please complete the 'I am not a robot' verification.");
-      return;
-    }
 
     setLoading(true);
 
@@ -44,8 +67,7 @@ const LoginForm: React.FC = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/login/`, {
         email,
-        password,
-        recaptcha_token: captchaToken
+        password
       });
       // ... rest of the logic ...
 
@@ -98,12 +120,22 @@ const LoginForm: React.FC = () => {
         InputLabelProps={{ sx: { color: 'text.secondary' } }}
         sx={textFieldStyle}
       />
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-        <ReCAPTCHA
-          sitekey={SITE_KEY}
-          onChange={(token) => setCaptchaToken(token)}
-        />
-      </Box>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="password"
+        label="Password"
+        type="password"
+        id="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
+        variant="outlined"
+        InputLabelProps={{ sx: { color: 'text.secondary' } }}
+        sx={textFieldStyle}
+      />
       <Button
         type="submit"
         fullWidth

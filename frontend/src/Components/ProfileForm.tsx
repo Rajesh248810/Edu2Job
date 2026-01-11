@@ -18,7 +18,8 @@ import {
   Cancel as CancelIcon,
   Business as BusinessIcon,
   CalendarMonth as DateIcon,
-  Grade as GradeIcon
+  Grade as GradeIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
@@ -53,8 +54,8 @@ const ProfileForm: React.FC = () => {
 
   // Tabs State
   const [activeTab, setActiveTab] = useState(0);
-  const sections = ['education', 'certification', 'skill', 'placement', 'password'];
-  const activeSection = sections[activeTab] as 'education' | 'certification' | 'skill' | 'placement' | 'password';
+  const sections = ['education', 'certification', 'skill', 'placement', 'password', 'about'];
+  const activeSection = sections[activeTab] as 'education' | 'certification' | 'skill' | 'placement' | 'password' | 'about';
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -75,6 +76,7 @@ const ProfileForm: React.FC = () => {
     role: '', company: '', placement_type: 'Job', date_of_joining: ''
   });
   const [passwordData, setPasswordData] = useState({ password: '', confirmPassword: '' });
+  const [aboutMe, setAboutMe] = useState('');
 
   // Reset form when switching sections
   useEffect(() => {
@@ -85,7 +87,12 @@ const ProfileForm: React.FC = () => {
     setSkillData({ skill_name: '' });
     setPlacementData({ role: '', company: '', placement_type: 'Job', date_of_joining: '' });
     setPasswordData({ password: '', confirmPassword: '' });
-  }, [activeSection]);
+
+    // Initialize aboutMe if user exists
+    if (user && user.about_me) {
+      setAboutMe(user.about_me);
+    }
+  }, [activeSection, user]);
 
   // Force refresh user data on mount
   useEffect(() => {
@@ -182,6 +189,8 @@ const ProfileForm: React.FC = () => {
       } else if (activeSection === 'password') {
         if (passwordData.password !== passwordData.confirmPassword) throw new Error("Passwords do not match");
         response = await api.post(`/api/set-password/`, { password: passwordData.password });
+      } else if (activeSection === 'about') {
+        response = await api.patch(`/api/users/${user.user_id}/update/`, { about_me: aboutMe });
       }
 
       if (response && (response.status === 200 || response.status === 201)) {
@@ -191,7 +200,9 @@ const ProfileForm: React.FC = () => {
         setCertData({ cert_name: '', issuing_organization: '', issue_date: '' });
         setSkillData({ skill_name: '' });
         setPlacementData({ role: '', company: '', placement_type: 'Job', date_of_joining: '' });
+        setPlacementData({ role: '', company: '', placement_type: 'Job', date_of_joining: '' });
         setPasswordData({ password: '', confirmPassword: '' });
+        // Don't clear aboutMe, keep it visible
         refreshUser();
       }
     } catch (err: any) {
@@ -359,6 +370,7 @@ const ProfileForm: React.FC = () => {
           <Tab icon={<SkillIcon />} iconPosition="start" label="Skills" />
           <Tab icon={<WorkIcon />} iconPosition="start" label="Detailed Placements" />
           <Tab icon={<LockIcon />} iconPosition="start" label="Password" />
+          <Tab icon={<InfoIcon />} iconPosition="start" label="About Me" />
         </Tabs>
       </Paper>
 
@@ -404,8 +416,20 @@ const ProfileForm: React.FC = () => {
         {activeSection === 'skill' && (
           <Box>
             {renderSkillChips()}
-
           </Box>
+        )}
+        {activeSection === 'about' && (
+          <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
+            <Typography variant="body1" paragraph fontStyle="italic" color="text.secondary">
+              "{user?.about_me || "Share a brief summary about your professional background and goals..."}"
+            </Typography>
+            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => {
+              setEditingId(999); // Dummy ID to trigger edit mode for about me
+              document.getElementById('profile-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
+            }}>
+              Edit About Me
+            </Button>
+          </Paper>
         )}
       </Box>
 
@@ -417,7 +441,7 @@ const ProfileForm: React.FC = () => {
               {editingId ? <EditIcon /> : <AddIcon />}
             </Avatar>
             <Typography variant="h6" fontWeight="bold">
-              {editingId ? 'Edit Item' : activeSection === 'password' ? 'Change Password' : `Add New ${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}`}
+              {activeSection === 'about' ? 'Update About Me' : editingId ? 'Edit Item' : activeSection === 'password' ? 'Change Password' : `Add New ${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}`}
             </Typography>
           </Box>
 
@@ -560,6 +584,23 @@ const ProfileForm: React.FC = () => {
               </Grid>
             )}
 
+            {/* ABOUT ME FORM */}
+            {activeSection === 'about' && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="About Me"
+                    multiline
+                    rows={4}
+                    value={aboutMe}
+                    onChange={(e) => setAboutMe(e.target.value)}
+                    placeholder="I am a passionate software engineer..."
+                  />
+                </Grid>
+              </Grid>
+            )}
+
             {/* ACTION BUTTONS */}
             <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
               {editingId && (
@@ -589,7 +630,7 @@ const ProfileForm: React.FC = () => {
                   boxShadow: 3
                 }}
               >
-                {editingId ? 'Update Item' : activeSection === 'password' ? 'Update Password' : 'Save Item'}
+                {activeSection === 'about' ? 'Update Profile' : editingId ? 'Update Item' : activeSection === 'password' ? 'Update Password' : 'Save Item'}
               </Button>
             </Box>
           </form>

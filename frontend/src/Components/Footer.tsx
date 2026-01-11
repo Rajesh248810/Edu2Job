@@ -82,10 +82,10 @@ const Footer: React.FC = () => {
                             Resources
                         </Typography>
                         <Stack spacing={1}>
-                            <Link href="#" color="text.secondary" underline="hover">Blog</Link>
-                            <Link href="#" color="text.secondary" underline="hover">Documentation</Link>
-                            <Link href="#" color="text.secondary" underline="hover">Help Center</Link>
-                            <Link href="#" color="text.secondary" underline="hover">FAQs</Link>
+                            <Link href="/blog" color="text.secondary" underline="hover">Blog</Link>
+                            <Link href="/documentation" color="text.secondary" underline="hover">Documentation</Link>
+                            <Link href="/help-center" color="text.secondary" underline="hover">Help Center</Link>
+                            <Link href="/faq" color="text.secondary" underline="hover">FAQs</Link>
                         </Stack>
                     </Box>
 
