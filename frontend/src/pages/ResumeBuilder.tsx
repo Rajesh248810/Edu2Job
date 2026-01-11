@@ -134,47 +134,33 @@ const ResumeBuilder: React.FC = () => {
                     @media print {
                         @page {
                             size: auto;
-                            margin: 0mm;
+                            margin: 20mm;
                         }
                         body {
-                            margin: 0;
-                            padding: 0;
-                        }
-                        body * {
                             visibility: hidden;
                         }
-                        #printable-area, #printable-area * {
-                            visibility: visible;
-                        }
                         #printable-area {
-                            position: fixed;
+                            visibility: visible;
+                            position: absolute;
                             left: 0;
                             top: 0;
                             width: 100%;
-                            height: 100%;
                             margin: 0;
-                            padding: 0; /* Remove padding to fit paper exactly */
+                            padding: 0;
                             background: white;
                             z-index: 9999;
-                            overflow: visible !important; /* Allow footer to escape or stay visible */
+                        }
+                        #printable-area * {
+                            visibility: visible;
                         }
                         .no-print {
                             display: none !important;
                         }
-                        /* Force footer to be visible and correctly placed */
-                        .verification-footer {
-                            display: flex !important;
-                            position: fixed !important; 
-                            bottom: 0 !important;
-                            left: 0 !important;
-                            width: 100% !important;
-                            z-index: 10000 !important;
-                            background: white !important;
-                            visibility: visible !important;
-                            border-top: 1px dashed #ddd !important;
-                            padding: 10px 0 !important;
+                        /* Ensure text colors are printed */
+                        * {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                         }
-                        /* Hide the absolute footer placeholder if needed, or let fixed override it */
                     }
                 `}
             </style>
