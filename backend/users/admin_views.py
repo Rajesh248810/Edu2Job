@@ -553,3 +553,22 @@ class AdminFeedbackView(APIView):
             import traceback
             traceback.print_exc()
             return Response({'error': f"Server Error in Feedback View: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request):
+        """
+        DELETE: Delete one or multiple feedback items
+        """
+        feedback_ids = request.data.get('feedback_ids', [])
+        if not feedback_ids:
+            return Response({'error': 'No feedback selected'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Filter and delete
+            deleted_count, _ = Feedback.objects.filter(feedback_id__in=feedback_ids).delete()
+            
+            if deleted_count == 0:
+                return Response({'error': 'No feedback found with provided IDs'}, status=status.HTTP_404_NOT_FOUND)
+                
+            return Response({'message': f'{deleted_count} feedback items deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
