@@ -387,14 +387,20 @@ const JobPredictor: React.FC = () => {
                                         size="small"
                                         startIcon={<WhatsAppIcon />}
                                         onClick={() => {
-                                            const text = `I just got predicted as ${predictions[0].role} on Edu2Job! Check it out:`;
+                                            const text = `🚀 I just discovered my dream career as a *${predictions[0].role}* on Edu2Job! 🎓\n\nWhat's yours? Check it out here: 👇`;
                                             const url = "https://edu2-job.vercel.app";
                                             window.open(`https://wa.me/?text=${encodeURIComponent(text)} ${url}`, '_blank');
                                         }}
-                                        sx={{ color: '#25D366', borderColor: '#25D366', '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)' } }}
+                                        sx={{
+                                            color: '#25D366',
+                                            borderColor: '#25D366',
+                                            '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)' },
+                                            minWidth: { xs: 'auto', sm: 64 }, // Allow shrinking on mobile
+                                            px: { xs: 1, sm: 2 }
+                                        }}
                                         variant="outlined"
                                     >
-                                        WhatsApp
+                                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>WhatsApp</Box>
                                     </Button>
                                     <Button
                                         size="small"
@@ -402,10 +408,16 @@ const JobPredictor: React.FC = () => {
                                         onClick={() => {
                                             window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://edu2-job.vercel.app')}`, '_blank');
                                         }}
-                                        sx={{ color: '#0077b5', borderColor: '#0077b5', '&:hover': { bgcolor: 'rgba(0, 119, 181, 0.1)' } }}
+                                        sx={{
+                                            color: '#0077b5',
+                                            borderColor: '#0077b5',
+                                            '&:hover': { bgcolor: 'rgba(0, 119, 181, 0.1)' },
+                                            minWidth: { xs: 'auto', sm: 64 },
+                                            px: { xs: 1, sm: 2 }
+                                        }}
                                         variant="outlined"
                                     >
-                                        LinkedIn
+                                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>LinkedIn</Box>
                                     </Button>
                                 </Box>
 

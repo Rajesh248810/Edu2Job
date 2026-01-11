@@ -180,6 +180,7 @@ const AdminDashboard: React.FC = () => {
     // Profile View State
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
     const [studentProfile, setStudentProfile] = useState<UserProfile | null>(null);
+    const [feedbackTableVersion, setFeedbackTableVersion] = useState(0);
 
     useEffect(() => {
         if (!user || user.role !== 'admin') {
@@ -459,6 +460,23 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    // --- Feedback Management Actions ---
+    const handleDeleteFeedback = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this feedback?')) {
+            try {
+                await api.delete(`${API_BASE_URL}/api/admin/feedback/`, { data: { feedback_ids: [id] } });
+                setSuccessMsg("Feedback deleted successfully");
+                // Trigger refresh in FeedbackTable via key or ref?
+                // Simpler: Just force re-mount or pass a trigger state
+                // Ideally, FeedbackTable should expose a refresh function or accept a version prop
+                // For now, let's use a key-based remount approach for simplicity
+                setFeedbackTableVersion(prev => prev + 1);
+            } catch (err) {
+                setError("Failed to delete feedback");
+            }
+        }
+    };
+
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
     };
@@ -618,7 +636,7 @@ const AdminDashboard: React.FC = () => {
                                     >
                                         <Box>
                                             {/* Stats Cards */}
-                                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+                                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
                                                 <Paper elevation={0} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 160, borderRadius: 4, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'text.primary', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                         <Avatar sx={{ bgcolor: 'primary.main', mr: 2, width: 40, height: 40 }}>
@@ -1126,7 +1144,10 @@ const AdminDashboard: React.FC = () => {
                                         animate="visible"
                                         exit="exit"
                                     >
-                                        <FeedbackTable />
+                                        <FeedbackTable
+                                            key={feedbackTableVersion}
+                                            onDelete={handleDeleteFeedback}
+                                        />
                                     </motion.div>
                                 )}
                             </AnimatePresence>

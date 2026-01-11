@@ -17,7 +17,8 @@ import {
     CircularProgress,
     Alert
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
 import api from '../api';
 import { API_BASE_URL } from '../config';
 
@@ -32,7 +33,11 @@ interface FeedbackData {
     prediction_id: number;
 }
 
-const FeedbackTable: React.FC = () => {
+interface FeedbackTableProps {
+    onDelete?: (id: number) => void;
+}
+
+const FeedbackTable: React.FC<FeedbackTableProps> = ({ onDelete }) => {
     const [feedbacks, setFeedbacks] = useState<FeedbackData[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -59,7 +64,7 @@ const FeedbackTable: React.FC = () => {
             fetchFeedback();
         }, 500);
         return () => clearTimeout(timeoutId);
-    }, [searchQuery]);
+    }, [searchQuery]); // Note: parent key change remounts component, so this effect runs on mount. No extra dep needed.
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -110,6 +115,7 @@ const FeedbackTable: React.FC = () => {
                             <TableCell>Role Predicted</TableCell>
                             <TableCell>Rating</TableCell>
                             <TableCell>Feedback Details</TableCell>
+                            <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -159,6 +165,18 @@ const FeedbackTable: React.FC = () => {
                                                     </Typography>
                                                 )}
                                             </Box>
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {onDelete && (
+                                                <IconButton
+                                                    color="error"
+                                                    size="small"
+                                                    onClick={() => onDelete(item.feedback_id)}
+                                                    title="Delete Feedback"
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 );
