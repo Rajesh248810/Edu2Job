@@ -3,7 +3,7 @@ import {
     Box, Typography, Button, CircularProgress, Alert, LinearProgress, Chip, Fade, Grow,
     Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Rating, TextField
 } from '@mui/material';
-import { Psychology as PsychologyIcon, EmojiEvents as TrophyIcon, Work as WorkIcon, Person as PersonIcon, Business as BusinessIcon, Visibility as VisibilityIcon, History as HistoryIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, ThumbUp, ThumbDown, Close as CloseIcon } from '@mui/icons-material';
+import { Psychology as PsychologyIcon, EmojiEvents as TrophyIcon, Work as WorkIcon, Person as PersonIcon, Business as BusinessIcon, Visibility as VisibilityIcon, History as HistoryIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, ThumbUp, ThumbDown, Close as CloseIcon, LinkedIn as LinkedInIcon, WhatsApp as WhatsAppIcon } from '@mui/icons-material';
 import { IconButton, Collapse } from '@mui/material';
 
 // ... (other imports)
@@ -378,6 +378,36 @@ const JobPredictor: React.FC = () => {
                                 >
                                     View Placed Students
                                 </Button>
+
+                                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <Typography variant="body2" fontWeight="bold" color="text.secondary">
+                                        Share result:
+                                    </Typography>
+                                    <Button
+                                        size="small"
+                                        startIcon={<WhatsAppIcon />}
+                                        onClick={() => {
+                                            const text = `I just got predicted as ${predictions[0].role} on Edu2Job! Check it out:`;
+                                            const url = "https://edu2-job.vercel.app";
+                                            window.open(`https://wa.me/?text=${encodeURIComponent(text)} ${url}`, '_blank');
+                                        }}
+                                        sx={{ color: '#25D366', borderColor: '#25D366', '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)' } }}
+                                        variant="outlined"
+                                    >
+                                        WhatsApp
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        startIcon={<LinkedInIcon />}
+                                        onClick={() => {
+                                            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://edu2-job.vercel.app')}`, '_blank');
+                                        }}
+                                        sx={{ color: '#0077b5', borderColor: '#0077b5', '&:hover': { bgcolor: 'rgba(0, 119, 181, 0.1)' } }}
+                                        variant="outlined"
+                                    >
+                                        LinkedIn
+                                    </Button>
+                                </Box>
 
                             </GlassCard>
                         </Box>
