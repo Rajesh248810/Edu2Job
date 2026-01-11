@@ -17,3 +17,4 @@ numpy
 PyMySQL
 cryptography
 grpcio
+# Force Rebuild: 2026-01-11

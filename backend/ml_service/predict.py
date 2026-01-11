@@ -51,7 +51,18 @@ def predict_job(user_profile):
     model_path = os.path.join(settings.BASE_DIR, 'ml_models', 'job_predictor.pkl')
     
     if not os.path.exists(model_path):
-        return {"error": "Model not found. Please train the model first."}
+        # DEBUGGING: Print where we are looking and what is there
+        debug_info = f"Looking at: {model_path}. BASE_DIR: {settings.BASE_DIR}. "
+        try:
+            debug_info += f"Contents of BASE_DIR: {os.listdir(settings.BASE_DIR)}. "
+            if os.path.exists(os.path.join(settings.BASE_DIR, 'ml_models')):
+                 debug_info += f"Contents of ml_models: {os.listdir(os.path.join(settings.BASE_DIR, 'ml_models'))}"
+            else:
+                 debug_info += "ml_models directory NOT FOUND."
+        except Exception as e:
+            debug_info += f"Error listing dirs: {str(e)}"
+            
+        return {"error": f"Model not found. {debug_info}"}
     
     try:
         clf = joblib.load(model_path)

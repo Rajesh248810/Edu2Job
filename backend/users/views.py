@@ -427,3 +427,45 @@ class FeedbackView(APIView):
             return Response({'message': 'Feedback submitted successfully'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DebugStatusView(APIView):
+    permission_classes = [permissions.AllowAny] # Public access for debugging
+    def get(self, request):
+        base_dir = settings.BASE_DIR
+        model_path = os.path.join(base_dir, 'ml_models', 'job_predictor.pkl')
+        
+        status_info = {
+            "base_dir": str(base_dir),
+            "cwd": os.getcwd(),
+            "model_path": model_path,
+            "model_exists": os.path.exists(model_path),
+            "dir_contents": [],
+            "ml_models_contents": [],
+            "model_load_status": "Not attempted"
+        }
+        
+        try:
+            status_info["dir_contents"] = os.listdir(base_dir)
+        except Exception as e:
+            status_info["dir_contents"] = f"Error: {str(e)}"
+            
+        try:
+            ml_models_dir = os.path.join(base_dir, 'ml_models')
+            if os.path.exists(ml_models_dir):
+                status_info["ml_models_contents"] = os.listdir(ml_models_dir)
+            else:
+                status_info["ml_models_contents"] = "Directory not found"
+        except Exception as e:
+            status_info["ml_models_contents"] = f"Error: {str(e)}"
+            
+        try:
+            if os.path.exists(model_path):
+                clf = joblib.load(model_path)
+                status_info["model_load_status"] = "Success"
+                status_info["classes"] = list(clf.classes_)
+            else:
+                 status_info["model_load_status"] = "File missing"
+        except Exception as e:
+             status_info["model_load_status"] = f"Failed: {str(e)}"
+             
+        return Response(status_info, status=status.HTTP_200_OK)

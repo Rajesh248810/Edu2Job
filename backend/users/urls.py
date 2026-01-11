@@ -5,7 +5,7 @@ from .views import (
     GoogleLoginView, SetPasswordView, UserListView, PublicProfileView, UserProfileUpdateView,
     PredictJobView, PlacedStudentsView, SubscribeView,
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
-    AutocompleteView, PredictionHistoryView, FeedbackView
+    AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView
 )
 
 from .admin_views import (
@@ -46,5 +46,6 @@ urlpatterns = [
     path('subscribe/', SubscribeView.as_view(), name='subscribe'),
     path('suggest/', AutocompleteView.as_view(), name='autocomplete'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
+    path('debug-status/', DebugStatusView.as_view(), name='debug_status'),
     path('admin/feedback/', AdminFeedbackView.as_view(), name='admin_feedback'),
 ] + router.urls
