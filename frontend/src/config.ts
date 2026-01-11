@@ -1,4 +1,4 @@
-import { Dashboard, Person, Psychology, People } from '@mui/icons-material';
+import { Dashboard, Person, Psychology, People, ReceiptLong } from '@mui/icons-material';
 
 import axios from 'axios';
 
@@ -22,5 +22,6 @@ export const NAV_ITEMS = [
     { label: 'Dashboard', path: '/dashboard', icon: Dashboard },
     { label: 'My Profile', path: '/profile', icon: Person },
     { label: 'Job Predictor', path: '/predictor', icon: Psychology },
+    { label: 'Resume Builder', path: '/resume', icon: ReceiptLong },
     { label: 'Community', path: '/community', icon: People },
 ];
