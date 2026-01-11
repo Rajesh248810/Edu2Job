@@ -2,14 +2,15 @@
   <!-- Background: Bright Yellow -->
   <rect width="512" height="512" rx="100" fill="#ffe500"/>
   
-  <!-- Icon: Graduation Cap + Rising Chart (Vibrant Blue) -->
-  <path d="M256 120 L400 190 L256 260 L112 190 Z" fill="#2874f0"/> <!-- Cap Top -->
-  <path d="M400 190 V280" stroke="#2874f0" stroke-width="25" stroke-linecap="round"/>
+  <!-- Design: Stylized 'E' forming a career path/stairs -->
+  <!-- A steep path going up (Growth) -->
+  <path d="M120 380 L220 380 L220 280 L320 280 L320 180 L420 180 V120 H360 L360 220 H260 L260 320 H120 Z" fill="#2874f0"/>
   
-  <!-- "Job/Growth" Arrow overlay -->
-  <path d="M160 380 L230 310 L300 380 L400 250" fill="none" stroke="#2874f0" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M380 250 H400 V270" fill="none" stroke="#2874f0" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/> <!-- Arrow Head -->
-
-  <!-- Cap Base -->
-  <path d="M140 210 V300 C140 360 372 360 372 300 V210" fill="none" stroke="#2874f0" stroke-width="0" opacity="0.5"/> 
+  <!-- A minimal graduation tassel hanging from the top step -->
+  <circle cx="400" cy="150" r="15" fill="#2874f0"/>
+  <path d="M400 150 L400 240" stroke="#2874f0" stroke-width="15" stroke-linecap="round"/>
+  
+  <!-- Subtle 'Speed' lines to suggest fast prediction (AI) -->
+  <path d="M100 250 H180" stroke="#2874f0" stroke-width="20" stroke-linecap="round" opacity="0.4"/>
+  <path d="M120 170 H200" stroke="#2874f0" stroke-width="20" stroke-linecap="round" opacity="0.3"/>
 </svg>
