@@ -2,15 +2,15 @@
   <!-- Background: Bright Yellow -->
   <rect width="512" height="512" rx="100" fill="#ffe500"/>
   
-  <!-- Design: Stylized 'E' forming a career path/stairs -->
-  <!-- A steep path going up (Growth) -->
-  <path d="M120 380 L220 380 L220 280 L320 280 L320 180 L420 180 V120 H360 L360 220 H260 L260 320 H120 Z" fill="#2874f0"/>
+  <!-- Icon: Graduation Cap (Vibrant Blue) - Bold & Clean -->
+  <!-- Cap Top Diamond -->
+  <path d="M256 120 L440 210 L256 300 L72 210 Z" fill="#2874f0"/>
   
-  <!-- A minimal graduation tassel hanging from the top step -->
-  <circle cx="400" cy="150" r="15" fill="#2874f0"/>
-  <path d="M400 150 L400 240" stroke="#2874f0" stroke-width="15" stroke-linecap="round"/>
+  <!-- Cap Bottom/Head part -->
+  <path d="M120 235 V330 C120 390 392 390 392 330 V235" fill="none" stroke="#2874f0" stroke-width="45" stroke-linecap="round" stroke-linejoin="round"/>
   
-  <!-- Subtle 'Speed' lines to suggest fast prediction (AI) -->
-  <path d="M100 250 H180" stroke="#2874f0" stroke-width="20" stroke-linecap="round" opacity="0.4"/>
-  <path d="M120 170 H200" stroke="#2874f0" stroke-width="20" stroke-linecap="round" opacity="0.3"/>
+  <!-- Tassel -->
+  <circle cx="440" cy="210" r="15" fill="#2874f0"/>
+  <path d="M440 210 V360" stroke="#2874f0" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="440" cy="380" r="25" fill="#2874f0"/>
 </svg>
