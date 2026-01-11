@@ -1,7 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#4F46E5"/>
-  <path d="M50 20 L90 40 L50 60 L10 40 Z" fill="white"/>
-  <path d="M10 40 L10 65 Q10 75 50 75 Q90 75 90 65 L90 40 L50 60 Z" fill="rgba(255,255,255,0.3)"/>
-  <path d="M50 60 L50 85" stroke="white" stroke-width="5"/>
-  <circle cx="90" cy="40" r="5" fill="#FCD34D"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background: Vibrant Blue (Flipkart-ish) -->
+  <rect width="512" height="512" rx="100" fill="#2874f0"/>
+  
+  <!-- Icon: Graduation Cap + Rising Chart (Yellow) -->
+  <path d="M256 120 L400 190 L256 260 L112 190 Z" fill="#ffe500"/> <!-- Cap Top -->
+  <path d="M400 190 V280" stroke="#ffe500" stroke-width="25" stroke-linecap="round"/> <!-- Tassel? No, keeping simple -->
+  
+  <!-- "Job/Growth" Arrow overlay -->
+  <path d="M160 380 L230 310 L300 380 L400 250" fill="none" stroke="#ffe500" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M380 250 H400 V270" fill="none" stroke="#ffe500" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/> <!-- Arrow Head -->
+
+  <!-- Cap Base -->
+  <path d="M140 210 V300 C140 360 372 360 372 300 V210" fill="none" stroke="#ffe500" stroke-width="0" opacity="0.5"/> 
+  <!-- Text 'E2J' style hidden, focusing on icon symbol -->
 </svg>
