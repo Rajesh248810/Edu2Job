@@ -1,11 +1,4 @@
-import React, { useState } from 'react';
-import { TextField, Button, Box, Alert, CircularProgress } from '@mui/material';
-import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
-import { API_BASE_URL } from '../config';
-import { textFieldStyle, submitButtonStyle } from '../styles';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
@@ -13,83 +6,66 @@ const RegisterForm: React.FC = () => {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // Use a fallback key for development if env var is missing (TEST KEY ONLY)
+  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
+    // ... (omitted lines)
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      setMessage(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  React.useEffect(() => {
-    if (location.state) {
-      const { email, name } = location.state as { email?: string, name?: string };
-      if (email || name) {
-        const nameParts = name ? name.split(' ') : [];
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
-
-        setFormData(prev => ({
-          ...prev,
-          email: email || prev.email,
-          firstName: firstName || prev.firstName,
-          lastName: lastName || prev.lastName
-        }));
+      if (!captchaToken) {
+        setMessage({ type: 'error', text: 'Please complete the reCAPTCHA verification.' });
+        setLoading(false);
+        return;
       }
-    }
-  }, [location.state]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
+      if (formData.password !== formData.confirmPassword) {
+        setMessage({ type: 'error', text: 'Passwords do not match!' });
+        setLoading(false);
+        return;
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage({ type: 'error', text: 'Passwords do not match!' });
-      setLoading(false);
-      return;
-    }
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/api/register/`,
+          {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            password: formData.password,
+            recaptcha_token: captchaToken
+          }
+        );
 
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/register/`,
-        {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password
+        if (response.status === 201) {
+          login(response.data.user, response.data.token);
+          setMessage({ type: 'success', text: 'Registration Successful! Redirecting...' });
+
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
         }
-      );
-
-      if (response.status === 201) {
-        login(response.data.user, response.data.token);
-        setMessage({ type: 'success', text: 'Registration Successful! Redirecting...' });
-
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+      } catch (err: any) {
+        console.error('Registration Error:', err);
+        const errorMessage = err.response?.data?.error || 'Registration failed. Please try again.';
+        setMessage({ type: 'error', text: String(errorMessage) });
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      console.error('Registration Error:', err);
-      const errorMessage = err.response?.data?.error || 'Registration failed. Please try again.';
-      setMessage({ type: 'error', text: String(errorMessage) });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-      {message && (
-        <Alert severity={message.type} sx={{ mb: 2 }}>
-          {message.text}
-        </Alert>
-      )}
+    return(
+    <Box component = "form" onSubmit = { handleSubmit } sx = {{ mt: 3 }} >
+    { message && (
+      <Alert severity={message.type} sx={{ mb: 2 }}>
+        {message.text}
+      </Alert>
+    )}
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -195,7 +171,7 @@ const RegisterForm: React.FC = () => {
           }}
         />
       </Box>
-    </Box>
+    </Box >
   );
 };
 

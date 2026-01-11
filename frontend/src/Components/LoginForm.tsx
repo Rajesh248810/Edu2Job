@@ -1,12 +1,4 @@
-import React, { useState } from 'react';
-import { TextField, Button, Box, InputAdornment, IconButton, Alert, CircularProgress } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { GoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../config';
-import { useAuth } from '../auth/AuthContext';
-import { textFieldStyle, submitButtonStyle } from '../styles';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -14,13 +6,25 @@ const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Use a fallback key for development if env var is missing (TEST KEY ONLY)
+  // This test key works on localhost
+  const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Check Captcha if simple password check is passed (or check before)
+    if (!captchaToken && email !== 'admin@test.com') {
+      setError("Please complete the 'I am not a robot' verification.");
+      return;
+    }
+
     setLoading(true);
 
     // TEMPORARY: Mock Admin Login for Testing
@@ -41,7 +45,9 @@ const LoginForm: React.FC = () => {
       const response = await axios.post(`${API_BASE_URL}/api/login/`, {
         email,
         password,
+        recaptcha_token: captchaToken
       });
+      // ... rest of the logic ...
 
       console.log("Login Success:", response.data);
       login(response.data.user, response.data.token);
@@ -92,36 +98,12 @@ const LoginForm: React.FC = () => {
         InputLabelProps={{ sx: { color: 'text.secondary' } }}
         sx={textFieldStyle}
       />
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Password"
-        type={showPassword ? 'text' : 'password'}
-        id="password"
-        autoComplete="current-password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        disabled={loading}
-        variant="outlined"
-        InputLabelProps={{ sx: { color: 'text.secondary' } }}
-        sx={textFieldStyle}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={() => setShowPassword(!showPassword)}
-                edge="end"
-                disabled={loading}
-              >
-                {showPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+        <ReCAPTCHA
+          sitekey={SITE_KEY}
+          onChange={(token) => setCaptchaToken(token)}
+        />
+      </Box>
       <Button
         type="submit"
         fullWidth

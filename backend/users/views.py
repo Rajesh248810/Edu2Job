@@ -14,6 +14,7 @@ import pandas as pd
 import os
 import json
 from ml_service.predict import predict_job
+import requests
 
 # SECURITY WARNING: Move this to settings.py in production
 # SECRET_KEY moved to settings.py
@@ -53,6 +54,22 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
+        recaptcha_token = request.data.get('recaptcha_token')
+
+        # Verify reCAPTCHA (Skip for test admin)
+        if email != 'admin@test.com':
+            secret_key = settings.RECAPTCHA_SECRET_KEY
+            if secret_key and recaptcha_token:
+                verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+                data = {
+                    'secret': secret_key,
+                    'response': recaptcha_token
+                }
+                verification = requests.post(verify_url, data=data).json()
+                if not verification.get('success'):
+                     return Response({'error': 'reCAPTCHA verification failed.'}, status=status.HTTP_400_BAD_REQUEST)
+            elif secret_key and not recaptcha_token:
+                 return Response({'error': 'reCAPTCHA token missing'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email=email)
