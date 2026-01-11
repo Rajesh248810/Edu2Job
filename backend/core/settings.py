@@ -17,8 +17,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY: In production, do not keep this hardcoded!
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-this-in-production')
 GOOGLE_CLIENT_ID = '463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com'
-# Google reCAPTCHA
-RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFyjTs1k62VKW') # Default is global test key (ALWAYS VALID)
+
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
