@@ -194,12 +194,26 @@ class PredictJobView(APIView):
         # Save Prediction History
         try:
             top_role = result['predictions'][0]['role']
-            # Serialize the full result or just relevant parts
-            prediction_entry = Predictionhistory.objects.create(
-                user=user,
-                predicted_roles=top_role, 
-                confidence_scores=json.dumps(result['predictions']) # Storing full prediction object/list
-            )
+            new_confidence_scores = json.dumps(result['predictions'])
+            
+            # OPTIMIZATION: Check if the latest prediction for this user is exactly the same role
+            last_prediction = Predictionhistory.objects.filter(user=user).order_by('-timestamp').first()
+            
+            if last_prediction and last_prediction.predicted_roles == top_role:
+                 # Update existing record instead of creating new one
+                 last_prediction.confidence_scores = new_confidence_scores
+                 last_prediction.timestamp = datetime.datetime.now() # Update time to now
+                 last_prediction.save()
+                 prediction_entry = last_prediction
+                 print(f"Updated existing prediction {prediction_entry.prediction_id} for user {user.user_id}")
+            else:
+                # Create NEW record
+                prediction_entry = Predictionhistory.objects.create(
+                    user=user,
+                    predicted_roles=top_role, 
+                    confidence_scores=new_confidence_scores
+                )
+                print(f"Created NEW prediction {prediction_entry.prediction_id} for user {user.user_id}")
             
             # Inject prediction_id into the response
             result['prediction_id'] = prediction_entry.prediction_id
