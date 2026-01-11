@@ -49,14 +49,40 @@ This project is configured for deployment using **Render** (Backend) and **Verce
         *   *Important*: Do not add a trailing slash `/`.
 6.  Click **Deploy**.
 
-## 3. Final Steps
+## 3. Custom Domain Setup (GitHub Student Pack) 🎓
+
+If you are a student, you can get a free domain (e.g., `.me`, `.tech`) for 1 year.
+
+### Step 1: Claim the Pack
+1.  Go to [GitHub Student Developer Pack](https://education.github.com/pack).
+2.  Click **Sign up for Student Developer Pack**.
+3.  Verify your student status (upload school ID or use `.edu` email).
+4.  Once approved (can take a few days), go to the **Benefits** page.
+
+### Step 2: Get Your Free Domain
+1.  Look for **Namecheap** or **Name.com** in the benefits list.
+2.  Click the link to claim your free domain (e.g., `www.your-name.me`).
+3.  Complete the "purchase" (it should be $0.00).
+
+### Step 3: Connect to Vercel
+1.  Go to your **Vercel Dashboard** > Select Project > **Settings** > **Domains**.
+2.  Enter your new domain (e.g., `www.edu2job.me`) and click **Add**.
+3.  Vercel will show you DNS records (A Record and CNAME).
+4.  Go to your Domain Registrar (Namecheap/Name.com) dashboard.
+5.  Find **DNS Management** or **Advanced DNS**.
+6.  Add the records provided by Vercel:
+    *   **Type**: A | **Host**: @ | **Value**: 76.76.21.21
+    *   **Type**: CNAME | **Host**: www | **Value**: cname.vercel-dns.com
+7.  Wait for propagation (creates HTTPS automatically).
+
+## 4. Final Steps
 
 1.  Once the Frontend is deployed, copy its URL (e.g., `https://edu2job-frontend.vercel.app`).
 2.  Go back to Render Backend settings -> Environment Variables.
 3.  Update (or add) `CSRF_TRUSTED_ORIGINS` to include your frontend URL.
 4.  (Optional) Set `CORS_ALLOW_ALL_ORIGINS` to `False` and add `CORS_ALLOWED_ORIGINS` with your frontend URL.
 
-## 4. Architecture & Data Flow
+## 5. Architecture & Data Flow
 
 Understanding how data moves through your application:
 
