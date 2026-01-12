@@ -22,8 +22,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # Allow all hosts for dev tunnels
-# Allow all hosts for dev tunnels
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['.edu2job.online', 'edu2job.online']
 
 # Application definition
 INSTALLED_APPS = [
@@ -133,11 +132,15 @@ cors_allowed_origins_env = os.getenv('CORS_ALLOWED_ORIGINS')
 if cors_allowed_origins_env:
     CORS_ALLOWED_ORIGINS = cors_allowed_origins_env.split(',')
 else:
-    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS = [
+        'https://edu2job.online',
+        'https://www.edu2job.online',
+        'https://edu2-job.vercel.app'
+    ]
 
 # 2. CSRF: Trusted Origins for Dev Tunnels
 # 2. CSRF: Trusted Origins for Dev Tunnels
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,https://*.devtunnels.ms').split(',')
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,https://*.devtunnels.ms,https://edu2job.online,https://www.edu2job.online,https://edu2-job.vercel.app').split(',')
 
 # 3. DRF: Use JWT Tokens instead of Sessions
 REST_FRAMEWORK = {

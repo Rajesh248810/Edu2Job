@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://edu2-job.vercel.app/</loc>
+    <loc>https://edu2job.online/</loc>
     <lastmod>2026-01-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://edu2-job.vercel.app/login</loc>
+    <loc>https://edu2job.online/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://edu2-job.vercel.app/register</loc>
+    <loc>https://edu2job.online/register</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://edu2-job.vercel.app/dashboard</loc>
+    <loc>https://edu2job.online/dashboard</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>

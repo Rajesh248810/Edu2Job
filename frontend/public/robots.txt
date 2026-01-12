@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://edu2-job.vercel.app/sitemap.xml
+Sitemap: https://edu2job.online/sitemap.xml
