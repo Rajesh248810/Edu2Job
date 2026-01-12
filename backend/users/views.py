@@ -612,3 +612,44 @@ class DebugStatusView(APIView):
              status_info["model_load_status"] = f"Failed: {str(e)}"
              
         return Response(status_info, status=status.HTTP_200_OK)
+
+class TestEmailView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        from django.core.mail import send_mail
+        from django.conf import settings
+        import os
+        
+        email_host = settings.EMAIL_HOST
+        email_port = settings.EMAIL_PORT
+        email_user = settings.EMAIL_HOST_USER
+        email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', False)
+        email_use_tls = getattr(settings, 'EMAIL_USE_TLS', False)
+        default_from = settings.DEFAULT_FROM_EMAIL
+
+        # Mask sensitive info
+        masked_user = email_user[:3] + "***" if email_user else "None"
+        
+        debug_info = {
+            "EMAIL_HOST": email_host,
+            "EMAIL_PORT": email_port,
+            "EMAIL_HOST_USER": masked_user,
+            "EMAIL_USE_SSL": email_use_ssl,
+            "EMAIL_USE_TLS": email_use_tls,
+            "DEFAULT_FROM_EMAIL": default_from,
+            "Status": "Attempting to send..."
+        }
+
+        try:
+            send_mail(
+                subject="Edu2Job Live Debug Email",
+                message="If you receive this, Django email settings are correct!",
+                from_email=default_from or email_user,
+                recipient_list=['sahoogyanaranjan353@gmail.com'], # Hardcoded user email for test
+                fail_silently=False
+            )
+            debug_info["Status"] = "Success! Email sent."
+            return Response(debug_info, status=status.HTTP_200_OK)
+        except Exception as e:
+            debug_info["Status"] = f"Failed: {str(e)}"
+            return Response(debug_info, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
