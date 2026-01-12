@@ -640,46 +640,68 @@ class DebugStatusView(APIView):
 class TestEmailView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
-        from django.core.mail import send_mail
+        import smtplib
+        import socket
         from django.conf import settings
-        import os
         import traceback
-        
-        email_host = getattr(settings, 'EMAIL_HOST', 'Not Set')
-        email_port = getattr(settings, 'EMAIL_PORT', 'Not Set')
-        email_user = getattr(settings, 'EMAIL_HOST_USER', None)
-        email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', False)
-        email_use_tls = getattr(settings, 'EMAIL_USE_TLS', False)
-        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not Set')
 
-        # Mask sensitive info
+        log = []
+        def log_step(msg):
+            print(f"DEBUG: {msg}")
+            log.append(msg)
+
+        email_host = getattr(settings, 'EMAIL_HOST', 'Not Set')
+        email_port = getattr(settings, 'EMAIL_PORT', 465)
+        email_user = getattr(settings, 'EMAIL_HOST_USER', None)
+        email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', None)
+        email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', True)
+        
+        # Mask password for safety in response
         masked_user = email_user[:3] + "***" if email_user else "None"
         
-        debug_info = {
-            "EMAIL_HOST": email_host,
-            "EMAIL_PORT": email_port,
-            "EMAIL_HOST_USER": masked_user,
-            "EMAIL_USE_SSL": email_use_ssl,
-            "EMAIL_USE_TLS": email_use_tls,
-            "DEFAULT_FROM_EMAIL": default_from,
-            "Status": "Attempting to send..."
+        response_data = {
+            "config": {
+                "HOST": email_host,
+                "PORT": email_port,
+                "USER": masked_user,
+                "SSL": email_use_ssl
+            },
+            "status": "pending",
+            "logs": log
         }
 
         try:
-            print("DEBUG: Sending Test Email...")
-            send_mail(
-                subject="Edu2Job Live Debug Email",
-                message="If you receive this, Django email settings are correct!",
-                from_email=default_from or email_user,
-                recipient_list=['sahoogyanaranjan353@gmail.com'], # Hardcoded user email for test
-                fail_silently=False
-            )
-            debug_info["Status"] = "Success! Email sent."
-            return Response(debug_info, status=status.HTTP_200_OK)
+            log_step("Starting connectivity test...")
+            
+            if not email_user or not email_pass:
+                raise ValueError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is NOT set.")
+
+            # Enforce short timeout to prevent 502/504 errors
+            timeout = 10 
+            log_step(f"Connecting to {email_host}:{email_port} (Timeout={timeout}s)...")
+            
+            if email_use_ssl:
+                server = smtplib.SMTP_SSL(email_host, email_port, timeout=timeout)
+            else:
+                server = smtplib.SMTP(email_host, email_port, timeout=timeout)
+                server.starttls()
+            
+            log_step("Connection established! logging in...")
+            server.login(email_user, email_pass)
+            log_step("Login SUCCESS!")
+            
+            log_step("Sending test email...")
+            msg = f"Subject: Edu2Job Debug\n\nThis is a test from {email_host}."
+            server.sendmail(email_user, ['sahoogyanaranjan353@gmail.com'], msg)
+            log_step("Email sent successfully!")
+            
+            server.quit()
+            
+            response_data["status"] = "success"
+            return Response(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
-            print(f"DEBUG: Email Failed: {e}")
-            debug_info["Status"] = "Failed"
-            debug_info["Error"] = str(e)
-            debug_info["Traceback"] = traceback.format_exc()
-            # Return 200 OK so the browser displays the JSON instead of a 500 HTML page
-            return Response(debug_info, status=status.HTTP_200_OK)
+            log_step(f"ERROR: {str(e)}")
+            response_data["status"] = "failed"
+            response_data["error_details"] = str(e)
+            return Response(response_data, status=status.HTTP_200_OK)
