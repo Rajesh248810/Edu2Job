@@ -116,31 +116,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Security: Detect HTTPS behind proxy (Render/Vercel)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # --- API & REACT CONFIGURATION ---
 
 # 1. CORS: Allow React (Port 5173) to talk to Django
-# 1. CORS: Allow React (Port 5173) to talk to Django
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+CORS_ALLOW_ALL_ORIGINS = False  # Explicit allows only
 CORS_ALLOW_CREDENTIALS = True
 from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'content-type',
     'authorization',
 ]
-# If you want to be specific:
-cors_allowed_origins_env = os.getenv('CORS_ALLOWED_ORIGINS')
-if cors_allowed_origins_env:
-    CORS_ALLOWED_ORIGINS = cors_allowed_origins_env.split(',')
-else:
-    CORS_ALLOWED_ORIGINS = [
-        'https://edu2job.online',
-        'https://www.edu2job.online',
-        'https://edu2-job.vercel.app'
-    ]
+
+CORS_ALLOWED_ORIGINS = [
+    'https://edu2job.online',
+    'https://www.edu2job.online',
+    'https://edu2-job.vercel.app',
+    'http://localhost:5173',
+]
 
 # 2. CSRF: Trusted Origins for Dev Tunnels
-# 2. CSRF: Trusted Origins for Dev Tunnels
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,https://*.devtunnels.ms,https://edu2job.online,https://www.edu2job.online,https://edu2-job.vercel.app').split(',')
+CSRF_TRUSTED_ORIGINS = [
+    'https://edu2job.online',
+    'https://www.edu2job.online',
+    'https://edu2-job.vercel.app',
+    'http://localhost:5173',
+]
+# Add dynamic devtunnels if needed manually, or keep explicit list for prod stability
 
 # 3. DRF: Use JWT Tokens instead of Sessions
 REST_FRAMEWORK = {
