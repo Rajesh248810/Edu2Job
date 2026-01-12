@@ -87,9 +87,56 @@ def create_notification(user, message, type='system'):
         ids_to_keep = list(notifications.values_list('notification_id', flat=True)[:4])
         Notification.objects.filter(user=user).exclude(notification_id__in=ids_to_keep).delete()
 
-def send_welcome_email(user):
+
+# --- EMAIL UTILITIES ---
+
+def get_email_template(title, body_content, cta_text=None, cta_link=None):
     """
-    Sends a welcome email to the newly registered user.
+    Returns a professional, responsive HTML email template (Amazon/Flipkart style).
+    """
+    cta_html = ""
+    if cta_text and cta_link:
+        cta_html = f"""
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{cta_link}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: sans-serif;">{cta_text}</a>
+            </div>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+            <!-- Header -->
+            <div style="background-color: #1E293B; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Edu2Job</h1>
+            </div>
+
+            <!-- Body -->
+            <div style="padding: 30px; color: #333333; line-height: 1.6;">
+                <h2 style="color: #1E293B; margin-top: 0;">{title}</h2>
+                {body_content}
+                {cta_html}
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
+                <p style="margin: 0;">&copy; 2026 Edu2Job. All rights reserved.</p>
+                <p style="margin: 5px 0;">Empowering Careers with AI.</p>
+                <p style="margin: 0;"><a href="https://edu2job.online" style="color: #2563EB; text-decoration: none;">Visit Website</a></p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+def send_html_email(subject, recipient_list, html_content):
+    """
+    Wrapper to send HTML emails in a thread.
     """
     from django.core.mail import send_mail
     from django.conf import settings
@@ -97,30 +144,77 @@ def send_welcome_email(user):
 
     def _send():
         try:
-            subject = 'Welcome to Edu2Job! 🚀'
-            message = f"""
-Hi {user.name},
-
-Welcome to Edu2Job! We are thrilled to have you on board.
-
-With Edu2Job, you can:
-- Predict your ideal career path based on your skills.
-- Build ATS-friendly resumes in minutes.
-- Get personalized job recommendations.
-
-Get started by completing your profile here: https://edu2job.online/profile
-
-Best regards,
-The Edu2Job Team
-            """
             from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [user.email]
-            
-            print(f"Attempting to send email to {user.email} from {from_email}...")
-            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
-            print(f"Email sent successfully to {user.email}")
+            send_mail(
+                subject=subject,
+                message="", # Plain text fallback (optional, leaving empty for now)
+                from_email=from_email,
+                recipient_list=recipient_list,
+                html_message=html_content,
+                fail_silently=False
+            )
+            print(f"HTML Email '{subject}' sent successfully to {recipient_list}")
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            print(f"Failed to send email '{subject}': {str(e)}")
 
-    # Send in a separate thread to avoid blocking the API response
     threading.Thread(target=_send).start()
+
+def send_welcome_email(user):
+    subject = "Welcome to Edu2Job! 🚀"
+    body = f"""
+        <p>Hi <strong>{user.name}</strong>,</p>
+        <p>Welcome to Edu2Job! We are thrilled to have you on board.</p>
+        <p>With Edu2Job, you can:</p>
+        <ul style="padding-left: 20px;">
+            <li>Predict your ideal career path based on your skills.</li>
+            <li>Build ATS-friendly resumes in minutes.</li>
+            <li>Get personalized job recommendations.</li>
+        </ul>
+        <p>We can't wait to see what you achieve!</p>
+    """
+    html_content = get_email_template("Welcome to the Future of Career Planning", body, "Complete Your Profile", "https://edu2job.online/profile")
+    send_html_email(subject, [user.email], html_content)
+
+
+def send_prediction_email(user, prediction_result):
+    """
+    Sends detailed prediction results to the user.
+    """
+    role = prediction_result.get('predictions', [{}])[0].get('role', 'Unknown Role')
+    
+    # Format top skills/insights if available (simplified for now)
+    body = f"""
+        <p>Hi <strong>{user.name}</strong>,</p>
+        <p>Your career analysis is ready! Based on your profile and skills, our AI has predicted your best-fit role:</p>
+        
+        <div style="background-color: #EFF6FF; border-left: 4px solid #2563EB; padding: 15px; margin: 20px 0;">
+            <h3 style="margin: 0; color: #1E40AF; font-size: 20px;">{role}</h3>
+            <p style="margin: 5px 0 0 0; color: #3B82F6;">Top Recommendation</p>
+        </div>
+
+        <p>This role aligns with your current skill set. Check out the dashboard to see more details, confidence scores, and recommended learning paths.</p>
+    """
+    
+    subject = f"Your Career Prediction Result: {role} 🎯"
+    html_content = get_email_template("Career Analysis Report", body, "View Detailed Report", "https://edu2job.online/dashboard")
+    send_html_email(subject, [user.email], html_content)
+
+
+def send_ticket_reply_email(user, ticket_subject, reply_message):
+    """
+    Sends an email when an admin replies to a ticket.
+    """
+    body = f"""
+        <p>Hi <strong>{user.name}</strong>,</p>
+        <p>Our support team has replied to your ticket: <strong>"{ticket_subject}"</strong>.</p>
+        
+        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #334155; font-style: italic;">"{reply_message}"</p>
+        </div>
+
+        <p>You can reply directly to this thread in the Help Center.</p>
+    """
+    
+    subject = f"Support Update: {ticket_subject}"
+    html_content = get_email_template("Update on your Support Ticket", body, "View Ticket", "https://edu2job.online/help-center")
+    send_html_email(subject, [user.email], html_content)

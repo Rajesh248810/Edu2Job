@@ -231,6 +231,13 @@ class PredictJobView(APIView):
             # Inject prediction_id into the response
             result['prediction_id'] = prediction_entry.prediction_id
             
+            # Send Prediction Email
+            try:
+                from .utils import send_prediction_email
+                send_prediction_email(user, result)
+            except Exception as e:
+                print(f"Error sending email: {e}")
+
         except Exception as e:
             print(f"Error saving history: {e}")
             # Don't fail the request if history save fails
@@ -521,12 +528,20 @@ class TicketChatViewSet(viewsets.ModelViewSet):
         recipient = ticket.user if is_admin else None # If logic for admin notifications is needed, it's more complex (which admin?)
         
         if recipient and is_admin:
-            # Notify User
+            # Notify User (System)
             create_notification(
                 user=recipient,
                 message=f"Support Agent replied to your ticket: {ticket.subject}",
                 type='ticket_reply'
             )
+            
+            # Send Email
+            try:
+                from .utils import send_ticket_reply_email
+                send_ticket_reply_email(recipient, ticket.subject, serializer.instance.message)
+            except Exception as e:
+                print(f"Error sending reply email: {e}")
+
         elif not is_admin:
              # Notify Admin (Just conceptually, or if we had a specific admin assigned)
              pass
