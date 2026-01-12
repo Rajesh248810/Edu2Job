@@ -1,5 +1,6 @@
 Django>=4.2,<5.3
 djangorestframework
+django-anymail[brevo]
 django-cors-headers
 djangorestframework-simplejwt
 python-dotenv

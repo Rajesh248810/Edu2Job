@@ -640,91 +640,28 @@ class DebugStatusView(APIView):
 class TestEmailView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
-        import smtplib
-        import socket
+        from django.core.mail import send_mail
         from django.conf import settings
         import traceback
 
-        log = []
-        def log_step(msg):
-            print(f"DEBUG: {msg}")
-            log.append(msg)
-
-        email_host = getattr(settings, 'EMAIL_HOST', 'Not Set')
-        email_port = getattr(settings, 'EMAIL_PORT', 465)
-        email_user = getattr(settings, 'EMAIL_HOST_USER', None)
-        email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', None)
-        email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', True)
-        
-        # Mask password for safety in response
-        masked_user = email_user[:3] + "***" if email_user else "None"
-        
-        response_data = {
-            "config": {
-                "HOST": email_host,
-                "PORT": email_port,
-                "USER": masked_user,
-                "SSL": email_use_ssl
-            },
-            "status": "pending",
-            "logs": log
-        }
-
         try:
-            log_step("--- DIAGNOSTICS ---")
-            
-            # 1. DNS Resolution
-            try:
-                ip_address = socket.gethostbyname(email_host)
-                log_step(f"DNS Resolution: {email_host} -> {ip_address}")
-            except Exception as dns_err:
-                log_step(f"DNS Resolution FAILED: {dns_err}")
-
-            # 2. General Internet Check (Google DNS)
-            try:
-                socket.create_connection(("8.8.8.8", 53), timeout=5)
-                log_step("General Internet Access: OK")
-            except Exception as net_err:
-                log_step(f"General Internet Access FAILED: {net_err}")
-                
-            log_step("-------------------")
-
-            log_step("Starting connectivity test...")
-            
-            if not email_user or not email_pass:
-                raise ValueError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is NOT set.")
-
-            # Enforce short timeout to prevent 502/504 errors
-            timeout = 10 
-            log_step(f"Connecting to {email_host}:{email_port} (Timeout={timeout}s)...")
-            
-            if email_use_ssl:
-                server = smtplib.SMTP_SSL(email_host, email_port, timeout=timeout)
-            else:
-                server = smtplib.SMTP(email_host, email_port, timeout=timeout)
-                # log_step("EHLO...")
-                # server.ehlo()
-                log_step("STARTTLS...")
-                server.starttls()
-                # log_step("EHLO after STARTTLS...")
-                # server.ehlo()
-            
-            log_step("Connection established! logging in...")
-            server.login(email_user, email_pass)
-            log_step("Login SUCCESS!")
-            
-            log_step("Sending test email...")
-            msg = f"Subject: Edu2Job Debug\n\nThis is a test from {email_host}."
-            server.sendmail(email_user, ['sahoogyanaranjan353@gmail.com'], msg)
-            log_step("Email sent successfully!")
-            
-            server.quit()
-            
-            response_data["status"] = "success"
-            return Response(response_data, status=status.HTTP_200_OK)
-
+            print("DEBUG: Sending Brevo Test Email...")
+            send_mail(
+                subject="Edu2Job Brevo API Test",
+                message="If you receive this, Brevo API is correctly configured and working!",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['sahoogyanaranjan353@gmail.com'],
+                fail_silently=False
+            )
+            return Response({
+                "status": "Success", 
+                "message": "Email sent via Anymail/Brevo!", 
+                "backend": settings.EMAIL_BACKEND
+            }, status=status.HTTP_200_OK)
         except Exception as e:
-            log_step(f"ERROR: {str(e)}")
-            response_data["status"] = "failed"
-            response_data["error_details"] = str(e)
-            return Response(response_data, status=status.HTTP_200_OK)
+            print(f"DEBUG: Email Failed: {e}")
+            return Response({
+                "status": "Failed",
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }, status=status.HTTP_200_OK)
