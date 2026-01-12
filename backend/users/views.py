@@ -643,13 +643,14 @@ class TestEmailView(APIView):
         from django.core.mail import send_mail
         from django.conf import settings
         import os
+        import traceback
         
-        email_host = settings.EMAIL_HOST
-        email_port = settings.EMAIL_PORT
-        email_user = settings.EMAIL_HOST_USER
+        email_host = getattr(settings, 'EMAIL_HOST', 'Not Set')
+        email_port = getattr(settings, 'EMAIL_PORT', 'Not Set')
+        email_user = getattr(settings, 'EMAIL_HOST_USER', None)
         email_use_ssl = getattr(settings, 'EMAIL_USE_SSL', False)
         email_use_tls = getattr(settings, 'EMAIL_USE_TLS', False)
-        default_from = settings.DEFAULT_FROM_EMAIL
+        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not Set')
 
         # Mask sensitive info
         masked_user = email_user[:3] + "***" if email_user else "None"
@@ -665,6 +666,7 @@ class TestEmailView(APIView):
         }
 
         try:
+            print("DEBUG: Sending Test Email...")
             send_mail(
                 subject="Edu2Job Live Debug Email",
                 message="If you receive this, Django email settings are correct!",
@@ -675,5 +677,9 @@ class TestEmailView(APIView):
             debug_info["Status"] = "Success! Email sent."
             return Response(debug_info, status=status.HTTP_200_OK)
         except Exception as e:
-            debug_info["Status"] = f"Failed: {str(e)}"
-            return Response(debug_info, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"DEBUG: Email Failed: {e}")
+            debug_info["Status"] = "Failed"
+            debug_info["Error"] = str(e)
+            debug_info["Traceback"] = traceback.format_exc()
+            # Return 200 OK so the browser displays the JSON instead of a 500 HTML page
+            return Response(debug_info, status=status.HTTP_200_OK)
