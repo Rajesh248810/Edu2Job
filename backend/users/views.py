@@ -26,19 +26,26 @@ class RegisterView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
+        print(f"DEBUG: Register attempt for {email}")
+
         if not all([firstName, lastName, email, password]):
+            print("DEBUG: Missing fields")
             return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(email=email).exists():
+            print("DEBUG: User exists")
             return Response({'error': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            print("DEBUG: Creating User...")
             user = User.objects.create(
                 name=f"{firstName} {lastName}",
                 email=email,
                 password_hash=password,
                 role='student'
             )
+            print(f"DEBUG: User created {user.user_id}")
+            
             payload = {
                 'user_id': user.user_id,
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),
@@ -47,22 +54,30 @@ class RegisterView(APIView):
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
             
             # Welcome Notification
-            create_notification(
-                user=user,
-                message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
-                type='welcome'
-            )
+            try:
+                print("DEBUG: Creating Notification...")
+                create_notification(
+                    user=user,
+                    message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
+                    type='welcome'
+                )
+            except Exception as e:
+                print(f"DEBUG: Notification failed: {e}")
             
             # Send Welcome Email (Safe)
             try:
+                print("DEBUG: Sending Email...")
                 from .utils import send_welcome_email
                 send_welcome_email(user)
+                print("DEBUG: Email function called")
             except Exception as e:
                 print(f"Warning: Welcome email could not be sent: {e}")
 
             serializer = UserSerializer(user)
+            print("DEBUG: Success Response Ready")
             return Response({'message': 'Registration Successful', 'token': token, 'user': serializer.data}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            print(f"CRITICAL REGISTER ERROR: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
