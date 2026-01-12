@@ -144,18 +144,27 @@ def send_html_email(subject, recipient_list, html_content):
 
     def _send():
         try:
-            from_email = settings.DEFAULT_FROM_EMAIL
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
+            
+            # Critical Info Log
+            print(f"Sending HTML Email: {subject}")
+            print(f"From: {from_email}")
+            print(f"To: {recipient_list}")
+
             send_mail(
                 subject=subject,
-                message="", # Plain text fallback (optional, leaving empty for now)
+                message="Please enable HTML to view this email.", # Better text fallback
                 from_email=from_email,
                 recipient_list=recipient_list,
                 html_message=html_content,
                 fail_silently=False
             )
-            print(f"HTML Email '{subject}' sent successfully to {recipient_list}")
+            print(f"SUCCESS: HTML Email '{subject}' sent to {recipient_list}")
         except Exception as e:
-            print(f"Failed to send email '{subject}': {str(e)}")
+            try:
+                print(f"ERROR Sending Email: {e}")
+            except:
+                print("ERROR Sending Email: (Message decoding failed)")
 
     threading.Thread(target=_send).start()
 
