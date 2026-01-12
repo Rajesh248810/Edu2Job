@@ -53,9 +53,12 @@ class RegisterView(APIView):
                 type='welcome'
             )
             
-            # Send Welcome Email
-            from .utils import send_welcome_email
-            send_welcome_email(user)
+            # Send Welcome Email (Safe)
+            try:
+                from .utils import send_welcome_email
+                send_welcome_email(user)
+            except Exception as e:
+                print(f"Warning: Welcome email could not be sent: {e}")
 
             serializer = UserSerializer(user)
             return Response({'message': 'Registration Successful', 'token': token, 'user': serializer.data}, status=status.HTTP_201_CREATED)
