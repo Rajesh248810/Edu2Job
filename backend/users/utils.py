@@ -86,3 +86,41 @@ def create_notification(user, message, type='system'):
         # We use list slicing on values_list to safely get IDs to keep
         ids_to_keep = list(notifications.values_list('notification_id', flat=True)[:4])
         Notification.objects.filter(user=user).exclude(notification_id__in=ids_to_keep).delete()
+
+def send_welcome_email(user):
+    """
+    Sends a welcome email to the newly registered user.
+    """
+    from django.core.mail import send_mail
+    from django.conf import settings
+    import threading
+
+    def _send():
+        try:
+            subject = 'Welcome to Edu2Job! 🚀'
+            message = f"""
+Hi {user.name},
+
+Welcome to Edu2Job! We are thrilled to have you on board.
+
+With Edu2Job, you can:
+- Predict your ideal career path based on your skills.
+- Build ATS-friendly resumes in minutes.
+- Get personalized job recommendations.
+
+Get started by completing your profile here: https://edu2job.online/profile
+
+Best regards,
+The Edu2Job Team
+            """
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [user.email]
+            
+            print(f"Attempting to send email to {user.email} from {from_email}...")
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            print(f"Email sent successfully to {user.email}")
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
+
+    # Send in a separate thread to avoid blocking the API response
+    threading.Thread(target=_send).start()

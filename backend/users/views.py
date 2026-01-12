@@ -52,6 +52,10 @@ class RegisterView(APIView):
                 message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
                 type='welcome'
             )
+            
+            # Send Welcome Email
+            from .utils import send_welcome_email
+            send_welcome_email(user)
 
             serializer = UserSerializer(user)
             return Response({'message': 'Registration Successful', 'token': token, 'user': serializer.data}, status=status.HTTP_201_CREATED)
