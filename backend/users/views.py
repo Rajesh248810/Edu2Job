@@ -671,6 +671,24 @@ class TestEmailView(APIView):
         }
 
         try:
+            log_step("--- DIAGNOSTICS ---")
+            
+            # 1. DNS Resolution
+            try:
+                ip_address = socket.gethostbyname(email_host)
+                log_step(f"DNS Resolution: {email_host} -> {ip_address}")
+            except Exception as dns_err:
+                log_step(f"DNS Resolution FAILED: {dns_err}")
+
+            # 2. General Internet Check (Google DNS)
+            try:
+                socket.create_connection(("8.8.8.8", 53), timeout=5)
+                log_step("General Internet Access: OK")
+            except Exception as net_err:
+                log_step(f"General Internet Access FAILED: {net_err}")
+                
+            log_step("-------------------")
+
             log_step("Starting connectivity test...")
             
             if not email_user or not email_pass:
@@ -684,7 +702,12 @@ class TestEmailView(APIView):
                 server = smtplib.SMTP_SSL(email_host, email_port, timeout=timeout)
             else:
                 server = smtplib.SMTP(email_host, email_port, timeout=timeout)
+                # log_step("EHLO...")
+                # server.ehlo()
+                log_step("STARTTLS...")
                 server.starttls()
+                # log_step("EHLO after STARTTLS...")
+                # server.ehlo()
             
             log_step("Connection established! logging in...")
             server.login(email_user, email_pass)
