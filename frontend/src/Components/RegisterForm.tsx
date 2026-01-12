@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Alert, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../config';
@@ -38,6 +38,7 @@ const submitButtonStyle = {
 
 const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -49,6 +50,25 @@ const RegisterForm: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+
+  // Pre-fill from Google Login Redirect
+  React.useEffect(() => {
+    if (location.state && location.state.email) {
+      const { email, name } = location.state;
+      const nameParts = name ? name.split(' ') : [];
+      const fName = nameParts[0] || '';
+      const lName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      setFormData(prev => ({
+        ...prev,
+        email: email || '',
+        firstName: fName,
+        lastName: lName
+      }));
+
+      setMessage({ type: 'success', text: 'Please complete your registration to continue.' });
+    }
+  }, [location.state]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
