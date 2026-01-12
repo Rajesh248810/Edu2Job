@@ -6,7 +6,8 @@ from .views import (
     PredictJobView, PlacedStudentsView, SubscribeView,
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
     AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView,
-    SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet
+    SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet,
+    TestEmailView
 )
 
 from .admin_views import (
@@ -34,6 +35,7 @@ urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     
     path('predict/', PredictJobView.as_view(), name='predict_job'),
+    path('predict-job/', PredictJobView.as_view(), name='predict_job_alias'), # Alias just in case
     path('prediction-history/', PredictionHistoryView.as_view(), name='prediction_history'),
     path('placed-students/', PlacedStudentsView.as_view(), name='placed_students'),
     path('users/', UserListView.as_view(), name='user_list'),
@@ -52,8 +54,8 @@ urlpatterns = [
     path('subscribe/', SubscribeView.as_view(), name='subscribe'),
     path('suggest/', AutocompleteView.as_view(), name='autocomplete'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
-    path('feedback/', FeedbackView.as_view(), name='feedback'),
     path('debug-status/', DebugStatusView.as_view(), name='debug_status'),
+    path('test-email/', TestEmailView.as_view(), name='test_email'),
     path('admin/feedback/', AdminFeedbackView.as_view(), name='admin_feedback'),
     path('admin/support-tickets/', AdminTicketView.as_view(), name='admin_ticket_list'),
     path('admin/support-tickets/<int:pk>/', AdminTicketView.as_view(), name='admin_ticket_detail'),
