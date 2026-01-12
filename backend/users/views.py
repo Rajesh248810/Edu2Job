@@ -645,17 +645,24 @@ class TestEmailView(APIView):
         import traceback
 
         try:
-            print("DEBUG: Sending Brevo Test Email...")
+            # Get parameters from URL (e.g., ?msg=Hello&to=me@gmail.com)
+            recipient = request.GET.get('to', 'sahoogyanaranjan353@gmail.com')
+            custom_msg = request.GET.get('msg', 'If you receive this, Brevo API is correctly configured and working!')
+            subject = request.GET.get('subject', 'Edu2Job Brevo API Test')
+
+            print(f"DEBUG: Sending Email to {recipient}...")
+            
             send_mail(
-                subject="Edu2Job Brevo API Test",
-                message="If you receive this, Brevo API is correctly configured and working!",
+                subject=subject,
+                message=custom_msg,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=['sahoogyanaranjan353@gmail.com'],
+                recipient_list=[recipient],
                 fail_silently=False
             )
             return Response({
                 "status": "Success", 
-                "message": "Email sent via Anymail/Brevo!", 
+                "message": f"Email sent to {recipient}", 
+                "content": custom_msg,
                 "backend": settings.EMAIL_BACKEND
             }, status=status.HTTP_200_OK)
         except Exception as e:
