@@ -38,13 +38,17 @@ class RegisterView(APIView):
 
         try:
             print("DEBUG: Creating User...")
-            user = User.objects.create(
-                name=f"{firstName} {lastName}",
-                email=email,
-                password_hash=password,
-                role='student'
-            )
-            print(f"DEBUG: User created {user.user_id}")
+            try:
+                user = User.objects.create(
+                    name=f"{firstName} {lastName}",
+                    email=email,
+                    password_hash=password,
+                    role='student'
+                )
+                print(f"DEBUG: User created {user.user_id}")
+            except Exception as db_err:
+                print(f"CRITICAL: Database User Creation Failed: {db_err}")
+                return Response({'error': f'Database error: {str(db_err)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             payload = {
                 'user_id': user.user_id,
@@ -53,7 +57,7 @@ class RegisterView(APIView):
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
             
-            # Welcome Notification
+            # Welcome Notification (Non-blocking)
             try:
                 print("DEBUG: Creating Notification...")
                 create_notification(
@@ -62,23 +66,25 @@ class RegisterView(APIView):
                     type='welcome'
                 )
             except Exception as e:
-                print(f"DEBUG: Notification failed: {e}")
+                print(f"DEBUG: Notification failed (Non-critical): {e}")
             
-            # Send Welcome Email (Safe)
+            # Send Welcome Email (Non-blocking)
             try:
                 print("DEBUG: Sending Email...")
                 from .utils import send_welcome_email
                 send_welcome_email(user)
                 print("DEBUG: Email function called")
             except Exception as e:
-                print(f"Warning: Welcome email could not be sent: {e}")
+                print(f"Warning: Welcome email could not be sent (Non-critical): {e}")
 
             serializer = UserSerializer(user)
             print("DEBUG: Success Response Ready")
             return Response({'message': 'Registration Successful', 'token': token, 'user': serializer.data}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(f"CRITICAL REGISTER ERROR: {e}")
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"CRITICAL REGISTER ERROR (General): {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': f"Server Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
     def post(self, request):

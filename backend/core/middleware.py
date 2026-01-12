@@ -4,5 +4,6 @@ class COOPMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        response['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+        # RELAXED FOR GOOGLE LOGIN DEBUGGING
+        response['Cross-Origin-Opener-Policy'] = 'unsafe-none' 
         return response

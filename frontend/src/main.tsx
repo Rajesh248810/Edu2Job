@@ -6,14 +6,18 @@ import { AuthProvider } from './auth/AuthContext'
 import { ThemeContextProvider } from './theme/ThemeContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+import ErrorBoundary from './Components/ErrorBoundary';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeContextProvider>
-      <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </GoogleOAuthProvider>
-    </ThemeContextProvider>
+    <ErrorBoundary>
+      <ThemeContextProvider>
+        <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </GoogleOAuthProvider>
+      </ThemeContextProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )
