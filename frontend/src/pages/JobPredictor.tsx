@@ -388,7 +388,7 @@ const JobPredictor: React.FC = () => {
                                         startIcon={<WhatsAppIcon />}
                                         onClick={() => {
                                             const text = `🚀 I just discovered my dream career as a *${predictions[0].role}* on Edu2Job! 🎓\n\nWhat's yours? Check it out here: 👇`;
-                                            const url = "https://edu2-job.vercel.app";
+                                            const url = "https://edu2job.online";
                                             window.open(`https://wa.me/?text=${encodeURIComponent(text)} ${url}`, '_blank');
                                         }}
                                         sx={{
@@ -406,7 +406,7 @@ const JobPredictor: React.FC = () => {
                                         size="small"
                                         startIcon={<LinkedInIcon />}
                                         onClick={() => {
-                                            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://edu2-job.vercel.app')}`, '_blank');
+                                            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://edu2job.online')}`, '_blank');
                                         }}
                                         sx={{
                                             color: '#0077b5',
@@ -418,6 +418,25 @@ const JobPredictor: React.FC = () => {
                                         variant="outlined"
                                     >
                                         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>LinkedIn</Box>
+                                    </Button>
+                                    {/* Twitter/X Share */}
+                                    <Button
+                                        size="small"
+                                        onClick={() => {
+                                            const text = `I used AI to predict my career path: ${predictions[0].role}! Check out Edu2Job.`;
+                                            const url = "https://edu2job.online";
+                                            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}&hashtags=Career,AI,Edu2Job`, '_blank');
+                                        }}
+                                        sx={{
+                                            color: '#000000',
+                                            borderColor: '#000000',
+                                            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
+                                            minWidth: { xs: 'auto', sm: 64 },
+                                            px: { xs: 1, sm: 2 }
+                                        }}
+                                        variant="outlined"
+                                    >
+                                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>X</Box>
                                     </Button>
                                 </Box>
 
