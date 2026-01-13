@@ -657,29 +657,32 @@ class TestEmailView(APIView):
 
             # Debug Info
             debug_info = {
-                "EMAIL_BACKEND": getattr(settings, 'EMAIL_BACKEND', 'Not Set'),
-                "EMAIL_HOST": getattr(settings, 'EMAIL_HOST', 'Not Set'),
-                "EMAIL_PORT": getattr(settings, 'EMAIL_PORT', 'Not Set'),
-                "EMAIL_USE_SSL": getattr(settings, 'EMAIL_USE_SSL', 'Not Set'),
-                "EMAIL_USE_TLS": getattr(settings, 'EMAIL_USE_TLS', 'Not Set'),
+                "MICROSERVICE_URL": getattr(settings, 'EMAIL_MICROSERVICE_URL', 'Not Set'),
+                "MICROSERVICE_SECRET_SET": bool(getattr(settings, 'EMAIL_MICROSERVICE_SECRET', None)),
                 "DEFAULT_FROM_EMAIL": getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not Set'),
-                "HOST_USER_SET": bool(getattr(settings, 'EMAIL_HOST_USER', None)),
-                "HOST_PASSWORD_SET": bool(getattr(settings, 'EMAIL_HOST_PASSWORD', None)),
             }
             print(f"DEBUG EMAIL CONFIG: {debug_info}")
 
-            send_mail(
-                subject=subject,
-                message=custom_msg,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[recipient],
-                fail_silently=False
-            )
+            # Use the new utility that routes to Microservice
+            from .utils import send_html_email
+            
+            # Create a simple HTML body for the test
+            html_body = f"""
+                <h3>Test Email from Edu2Job</h3>
+                <p><strong>Message:</strong> {custom_msg}</p>
+                <p>This email was sent via the Vercel Microservice to bypass SMTP blocks.</p>
+                <hr>
+                <p>Config: {debug_info}</p>
+            """
+            
+            # We use send_html_email which handles the threading/microservice logic
+            send_html_email(subject, [recipient], html_body)
             
             return Response({
                 "status": "Success", 
-                "message": f"Email sent to {recipient}", 
-                "config": debug_info
+                "message": f"Email queued for {recipient}. Check inbox (and spam).", 
+                "config": debug_info,
+                "note": "Sent via Vercel Microservice"
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
