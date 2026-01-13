@@ -25,12 +25,9 @@ def test_email():
     # settings.EMAIL_USE_SSL = True
     # settings.EMAIL_USE_TLS = False
     
-    print(f"Testing Hostinger SMTP Configuration...")
-    print(f"Host: {settings.EMAIL_HOST}")
-    print(f"Port: {settings.EMAIL_PORT}")
-    print(f"SSL: {getattr(settings, 'EMAIL_USE_SSL', False)} | TLS: {getattr(settings, 'EMAIL_USE_TLS', False)}")
-    print(f"User: {settings.EMAIL_HOST_USER}")
-    print(f"Backend: {settings.EMAIL_BACKEND}")
+    print(f"Testing Email Microservice Configuration...")
+    print(f"URL: {getattr(settings, 'EMAIL_MICROSERVICE_URL', 'Not Set')}")
+    print(f"Secret: {getattr(settings, 'EMAIL_MICROSERVICE_SECRET', 'Not Set')[:5]}***")
     print("-" * 30)
 
     # Mock Data

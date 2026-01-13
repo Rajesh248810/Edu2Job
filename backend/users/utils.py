@@ -144,26 +144,37 @@ def send_html_email(subject, recipient_list, html_content):
 
     def _send():
         try:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
+            # Microservice Logic
+            service_url = getattr(settings, 'EMAIL_MICROSERVICE_URL', '').rstrip('/')
+            api_secret = getattr(settings, 'EMAIL_MICROSERVICE_SECRET', '')
             
-            # Critical Info Log
-            try:
-                safe_subject = subject.encode('ascii', 'ignore').decode('ascii')
-                print(f"Sending HTML Email: {safe_subject}")
-                print(f"From: {from_email}")
-                print(f"To: {recipient_list}")
-            except:
-                print("Sending HTML Email (logging suppressed due to encoding error)")
+            if not service_url:
+                print("ERROR: EMAIL_MICROSERVICE_URL not configured.")
+                return
 
-            send_mail(
-                subject=subject,
-                message="Please enable HTML to view this email.", # Better text fallback
-                from_email=from_email,
-                recipient_list=recipient_list,
-                html_message=html_content,
-                fail_silently=False
-            )
-            print(f"SUCCESS: HTML Email sent to {recipient_list}")
+            endpoint = f"{service_url}/send-email"
+            payload = {
+                "to": recipient_list[0] if isinstance(recipient_list, list) else recipient_list,
+                "subject": subject,
+                "body": html_content,
+                "type": "html"
+            }
+            headers = {
+                "Authorization": f"Bearer {api_secret}",
+                "Content-Type": "application/json"
+            }
+
+            print(f"Sending Email via Microservice: {endpoint}")
+            # print(f"Payload: {payload}") # Debug only
+
+            import requests
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                print(f"SUCCESS: Email sent via Microservice to {recipient_list}")
+            else:
+                print(f"ERROR: Microservice failed {response.status_code} - {response.text}")
+
         except Exception as e:
             try:
                 print(f"ERROR Sending Email: {str(e)}")

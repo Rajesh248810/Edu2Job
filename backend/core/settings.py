@@ -169,9 +169,12 @@ else:
     EMAIL_USE_SSL = False
     EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'support@edu2job.online')
+# --- EMAIL MICROSERVICE CONFIGURATION ---
+EMAIL_MICROSERVICE_URL = os.getenv('EMAIL_MICROSERVICE_URL', 'https://edu2-job-email.vercel.app')
+EMAIL_MICROSERVICE_SECRET = os.getenv('EMAIL_MICROSERVICE_SECRET', 'default-dev-secret')
 
-# --- PREVIOUS CONFIG (BREVO) - DISABLED ---
+# Keep these for reference or fallback, but actual sending will route via HTTP
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'support@edu2job.online')
 # EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 # ANYMAIL = {
 #     "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
