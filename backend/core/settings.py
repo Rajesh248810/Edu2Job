@@ -154,20 +154,19 @@ REST_FRAMEWORK = {
     )
 }
 
-# --- EMAIL CONFIGURATION (ANYMAIL / BREVO) ---
-# We use Brevo API (HTTPS/443) to avoid Render's SMTP Port Block (Errno 101)
-EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
-
-ANYMAIL = {
-    "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
-}
+# --- EMAIL CONFIGURATION (HOSTINGER SMTP) ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.hostinger.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False # Use SSL=True if using Port 465
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'support@edu2job.online')
 
-# SMTP FALLBACK (Deprioritized for Prod, kept for reference or dev if needed)
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.hostinger.com')
-# EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-# EMAIL_USE_TLS = True 
+# --- PREVIOUS CONFIG (BREVO) - DISABLED ---
+# EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+# ANYMAIL = {
+#     "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
+# } 

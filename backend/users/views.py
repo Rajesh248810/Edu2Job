@@ -647,8 +647,8 @@ class TestEmailView(APIView):
         try:
             # Get parameters from URL (e.g., ?msg=Hello&to=me@gmail.com)
             recipient = request.GET.get('to', 'sahoogyanaranjan353@gmail.com')
-            custom_msg = request.GET.get('msg', 'If you receive this, Brevo API is correctly configured and working!')
-            subject = request.GET.get('subject', 'Edu2Job Brevo API Test')
+            custom_msg = request.GET.get('msg', 'If you receive this, Hostinger SMTP is correctly configured and working!')
+            subject = request.GET.get('subject', 'Edu2Job SMTP Email Test')
 
             print(f"DEBUG: Sending Email to {recipient}...")
             
