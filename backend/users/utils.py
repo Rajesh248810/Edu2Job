@@ -147,9 +147,13 @@ def send_html_email(subject, recipient_list, html_content):
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
             
             # Critical Info Log
-            print(f"Sending HTML Email: {subject}")
-            print(f"From: {from_email}")
-            print(f"To: {recipient_list}")
+            try:
+                safe_subject = subject.encode('ascii', 'ignore').decode('ascii')
+                print(f"Sending HTML Email: {safe_subject}")
+                print(f"From: {from_email}")
+                print(f"To: {recipient_list}")
+            except:
+                print("Sending HTML Email (logging suppressed due to encoding error)")
 
             send_mail(
                 subject=subject,
@@ -159,10 +163,10 @@ def send_html_email(subject, recipient_list, html_content):
                 html_message=html_content,
                 fail_silently=False
             )
-            print(f"SUCCESS: HTML Email '{subject}' sent to {recipient_list}")
+            print(f"SUCCESS: HTML Email sent to {recipient_list}")
         except Exception as e:
             try:
-                print(f"ERROR Sending Email: {e}")
+                print(f"ERROR Sending Email: {str(e)}")
             except:
                 print("ERROR Sending Email: (Message decoding failed)")
 
