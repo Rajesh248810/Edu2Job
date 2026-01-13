@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Chip, Button, CircularProgress, Alert, Avatar, Divider } from '@mui/material';
-import { ArrowBack, Schedule, Person } from '@mui/icons-material';
+import { ArrowBack, Schedule } from '@mui/icons-material';
 import api from '../../api';
 
 interface BlogPost {
