@@ -11,7 +11,11 @@ django.setup()
 from users.models import TrainingData
 
 def populate_data():
-    TOTAL_RECORDS = 1000000 # Targeted 1 Million for high accuracy without crashing
+    if TrainingData.objects.count() > 0:
+        print("Training data already exists. Skipping population.")
+        return
+
+    TOTAL_RECORDS = 10000 # Reduced for quick setup
     BATCH_SIZE = 5000
     print(f"Generating {TOTAL_RECORDS} realistic training records with diverse roles...")
     

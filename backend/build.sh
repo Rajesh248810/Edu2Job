@@ -8,4 +8,6 @@ python manage.py collectstatic --noinput
 python manage.py migrate
 python create_superuser.py
 python populate_blog.py
+python populate_data.py
+python ml_service/train.py
 
