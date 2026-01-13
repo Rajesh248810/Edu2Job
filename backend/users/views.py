@@ -640,18 +640,34 @@ class DebugStatusView(APIView):
 class TestEmailView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
-        from django.core.mail import send_mail
-        from django.conf import settings
-        import traceback
-
+        status_data = {"status": "Starting"}
         try:
-            # Get parameters from URL (e.g., ?msg=Hello&to=me@gmail.com)
-            recipient = request.GET.get('to', 'sahoogyanaranjan353@gmail.com')
-            custom_msg = request.GET.get('msg', 'If you receive this, Hostinger SMTP is correctly configured and working!')
-            subject = request.GET.get('subject', 'Edu2Job SMTP Email Test')
+            # Import locally to avoid top-level crashes
+            from django.core.mail import send_mail
+            from django.conf import settings
+            import traceback
+            import os
 
-            print(f"DEBUG: Sending Email to {recipient}...")
+            status_data["step"] = "Imports Loaded"
             
+            # Get parameters
+            recipient = request.GET.get('to', 'sahoogyanaranjan353@gmail.com')
+            custom_msg = request.GET.get('msg', 'Hostinger SMTP Test')
+            subject = request.GET.get('subject', 'Edu2Job SMTP Test')
+
+            # Debug Info
+            debug_info = {
+                "EMAIL_BACKEND": getattr(settings, 'EMAIL_BACKEND', 'Not Set'),
+                "EMAIL_HOST": getattr(settings, 'EMAIL_HOST', 'Not Set'),
+                "EMAIL_PORT": getattr(settings, 'EMAIL_PORT', 'Not Set'),
+                "EMAIL_USE_SSL": getattr(settings, 'EMAIL_USE_SSL', 'Not Set'),
+                "EMAIL_USE_TLS": getattr(settings, 'EMAIL_USE_TLS', 'Not Set'),
+                "DEFAULT_FROM_EMAIL": getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not Set'),
+                "HOST_USER_SET": bool(getattr(settings, 'EMAIL_HOST_USER', None)),
+                "HOST_PASSWORD_SET": bool(getattr(settings, 'EMAIL_HOST_PASSWORD', None)),
+            }
+            print(f"DEBUG EMAIL CONFIG: {debug_info}")
+
             send_mail(
                 subject=subject,
                 message=custom_msg,
@@ -659,16 +675,20 @@ class TestEmailView(APIView):
                 recipient_list=[recipient],
                 fail_silently=False
             )
+            
             return Response({
                 "status": "Success", 
                 "message": f"Email sent to {recipient}", 
-                "content": custom_msg,
-                "backend": settings.EMAIL_BACKEND
+                "config": debug_info
             }, status=status.HTTP_200_OK)
+
         except Exception as e:
-            print(f"DEBUG: Email Failed: {e}")
+            print(f"CRITICAL EMAIL FAILURE: {e}")
+            import traceback
             return Response({
                 "status": "Failed",
                 "error": str(e),
-                "traceback": traceback.format_exc()
+                "type": type(e).__name__,
+                "traceback": traceback.format_exc(),
+                "last_step": status_data.get("step", "Unknown")
             }, status=status.HTTP_200_OK)
