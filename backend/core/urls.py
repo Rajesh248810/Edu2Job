@@ -30,6 +30,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('health/', health_check), # Direct health check
     path('api/', include('users.urls')),
+    path('api/blog/', include('blog.urls')),
 ]
 
 from django.conf import settings

@@ -40,6 +40,8 @@ INSTALLED_APPS = [
 
     # My Apps
     'users',
+    'ml_service',
+    'blog',
     # 'anymail',
 ]
 

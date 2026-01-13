@@ -21,6 +21,7 @@ const HelpCenter = lazy(() => import('./pages/resources/HelpCenter'));
 const FAQ = lazy(() => import('./pages/resources/FAQ'));
 const Documentation = lazy(() => import('./pages/resources/Documentation'));
 const Blog = lazy(() => import('./pages/resources/Blog'));
+const BlogDetail = lazy(() => import('./pages/resources/BlogDetail'));
 const TicketDetail = lazy(() => import('./pages/TicketDetail'));
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'));
 const VerificationPage = lazy(() => import('./pages/VerificationPage'));
@@ -48,6 +49,7 @@ function App() {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/documentation" element={<Documentation />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogDetail />} />
             <Route path="/verify/:userId" element={<VerificationPage />} />
           </Route>
 

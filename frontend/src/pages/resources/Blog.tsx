@@ -1,34 +1,52 @@
-import React from 'react';
-import { Box, Container, Typography, Card, CardContent, CardMedia, Button, Chip } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Container, Typography, Card, CardContent, CardMedia, Button, Chip, CircularProgress, Alert } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api';
 
-const blogPosts = [
-    {
-        id: 1,
-        title: "Top 10 Emerging Tech Jobs in 2026",
-        excerpt: "Discover the most in-demand roles in the technology sector and what skills you need to land them.",
-        category: "Career Trends",
-        image: "https://source.unsplash.com/random/800x600/?technology,office",
-        date: "Jan 10, 2026"
-    },
-    {
-        id: 2,
-        title: "How to Build a Resume that Stands Out",
-        excerpt: "Learn the secrets to creating a resume that passes ATS scanners and catches recruiters' eyes.",
-        category: "Career Advice",
-        image: "https://source.unsplash.com/random/800x600/?resume,writing",
-        date: "Dec 15, 2025"
-    },
-    {
-        id: 3,
-        title: "The Importance of Continuous Learning",
-        excerpt: "Why certifications and lifelong learning are your best assets in a rapidly changing job market.",
-        category: "Personal Growth",
-        image: "https://source.unsplash.com/random/800x600/?learning,library",
-        date: "Nov 28, 2025"
-    }
-];
+interface BlogPost {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    category: string;
+    image_url: string;
+    created_at: string;
+}
 
 const Blog: React.FC = () => {
+    const [posts, setPosts] = useState<BlogPost[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                // Ensure URL ends with / to avoid 301 Redirects
+                const response = await api.get('/api/blog/');
+                setPosts(response.data);
+            } catch (err) {
+                console.error("Failed to fetch blog posts", err);
+                setError("Unable to load latest articles.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPosts();
+    }, []);
+
+    const handleReadMore = (slug: string) => {
+        navigate(`/blog/${slug}`);
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
             <Box sx={{ textAlign: 'center', mb: 8 }}>
@@ -40,20 +58,24 @@ const Blog: React.FC = () => {
                 </Typography>
             </Box>
 
+            {error && <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>}
+
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 4 }}>
-                {blogPosts.map((post) => (
+                {posts.map((post) => (
                     <Card key={post.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-5px)' } }}>
                         <CardMedia
                             component="img"
                             height="200"
-                            image={post.image}
+                            image={post.image_url}
                             alt={post.title}
-                            sx={{ bgcolor: 'grey.200' }} // Fallback color
+                            sx={{ bgcolor: 'grey.200' }}
                         />
                         <CardContent sx={{ flexGrow: 1 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
                                 <Chip label={post.category} size="small" color="primary" variant="outlined" />
-                                <Typography variant="caption" color="text.secondary">{post.date}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                </Typography>
                             </Box>
                             <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
                                 {post.title}
@@ -61,7 +83,12 @@ const Blog: React.FC = () => {
                             <Typography variant="body2" color="text.secondary" paragraph>
                                 {post.excerpt}
                             </Typography>
-                            <Button size="small" color="primary" sx={{ mt: 'auto' }}>
+                            <Button
+                                size="small"
+                                color="primary"
+                                sx={{ mt: 'auto' }}
+                                onClick={() => handleReadMore(post.slug)}
+                            >
                                 Read More
                             </Button>
                         </CardContent>
