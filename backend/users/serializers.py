@@ -174,7 +174,7 @@ class TicketChatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketChat
-        fields = ['chat_id', 'ticket', 'sender', 'sender_name', 'sender_role', 'message', 'timestamp', 'is_read']
+        fields = ['chat_id', 'ticket', 'sender', 'sender_name', 'sender_role', 'message', 'attachment', 'timestamp', 'is_read']
         read_only_fields = ['timestamp', 'sender', 'ticket']
 
 class NotificationSerializer(serializers.ModelSerializer):

@@ -3,7 +3,7 @@ import {
   Box, TextField, Button, Typography, Paper,
   Alert, CircularProgress, Card, CardContent,
   IconButton, Divider, Chip, MenuItem, useTheme, CardActions,
-  Tabs, Tab, Fade, Avatar
+  Tabs, Tab, Fade, Avatar, Badge
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -19,7 +19,8 @@ import {
   Business as BusinessIcon,
   CalendarMonth as DateIcon,
   Grade as GradeIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  CameraAlt as CameraAltIcon
 } from '@mui/icons-material';
 import api from '../api';
 import { useAuth } from '../auth/AuthContext';
@@ -61,6 +62,10 @@ const ProfileForm: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  // Image Preview State
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
   // Form State
   const [eduData, setEduData] = useState<EducationData>({
     degree: '', specialization: '', university: '', cgpa: '', year_of_completion: ''
@@ -98,6 +103,42 @@ const ProfileForm: React.FC = () => {
   useEffect(() => {
     refreshUser();
   }, []);
+
+  // Update previews when user data loads
+  useEffect(() => {
+    if (user) {
+      setBannerPreview(user.banner_image || null);
+      setAvatarPreview(user.profile_picture || null);
+    }
+  }, [user]);
+
+  // Image Upload Handler
+  const handleImageUpload = async (field: 'profile_picture' | 'banner_image', file: File) => {
+    if (!file) return;
+
+    // Create local preview
+    const objectUrl = URL.createObjectURL(file);
+    if (field === 'profile_picture') setAvatarPreview(objectUrl);
+    else setBannerPreview(objectUrl);
+
+    const formData = new FormData();
+    formData.append(field, file);
+
+    try {
+      setLoading(true);
+      // Using partial update endpoint
+      await api.patch(`/api/users/${user.user_id}/update/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMessage({ type: 'success', text: 'Image updated successfully!' });
+      refreshUser();
+    } catch (err: any) {
+      console.error('Image upload failed:', err);
+      setMessage({ type: 'error', text: 'Failed to upload image' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle Input Changes
   const handleEduChange = (e: React.ChangeEvent<HTMLInputElement>) => setEduData({ ...eduData, [e.target.name]: e.target.value });
@@ -340,17 +381,85 @@ const ProfileForm: React.FC = () => {
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, mb: 10 }}>
       {/* Header */}
-      <Box mb={4} textAlign="center">
+      {/* Header with Banner & Avatar */}
+      <Box sx={{ position: 'relative', mb: 8 }}>
+        {/* Banner */}
+        <Box
+          sx={{
+            height: 200,
+            bgcolor: 'grey.300',
+            borderRadius: 4,
+            backgroundImage: `url(${bannerPreview})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: 3
+          }}
+        >
+          <IconButton
+            component="label"
+            disabled={loading}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <input hidden accept="image/*" type="file" onChange={(e) => e.target.files?.[0] && handleImageUpload('banner_image', e.target.files[0])} />
+            <EditIcon />
+          </IconButton>
+        </Box>
+
+        {/* Avatar */}
+        <Box sx={{ position: 'absolute', bottom: -50, left: '50%', transform: 'translateX(-50%)' }}>
+          <Badge
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            badgeContent={
+              <IconButton
+                component="label"
+                disabled={loading}
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  boxShadow: 3,
+                  width: 40,
+                  height: 40
+                }}
+              >
+                <input hidden accept="image/*" type="file" onChange={(e) => e.target.files?.[0] && handleImageUpload('profile_picture', e.target.files[0])} />
+                <CameraAltIcon fontSize="small" />
+              </IconButton>
+            }
+          >
+            <Avatar
+              src={avatarPreview || undefined}
+              sx={{ width: 120, height: 120, border: '4px solid white', boxShadow: 3, bgcolor: 'primary.light', fontSize: '3rem' }}
+            >
+              {user?.name?.charAt(0)}
+            </Avatar>
+          </Badge>
+        </Box>
+      </Box>
+
+      {/* Title */}
+      <Box mb={4} textAlign="center" mt={6}>
         <Typography variant="h4" fontWeight="800" gutterBottom sx={{
           background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           mb: 1
         }}>
-          My Profile
+          {user?.name}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Manage your professional journey details
+          {user?.role === 'admin' ? 'Administrator' : 'Student & Learner'}
         </Typography>
       </Box>
 

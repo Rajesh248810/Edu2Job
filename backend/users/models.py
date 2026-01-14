@@ -154,6 +154,7 @@ class TicketChat(models.Model):
     ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='chats')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
+    attachment = models.FileField(upload_to='ticket_attachments/', blank=True, null=True)
     is_read = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 

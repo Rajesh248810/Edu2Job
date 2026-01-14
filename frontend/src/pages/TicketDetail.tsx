@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-// Trigger Vercel Build
-import { Box, Typography, TextField, Button, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { Box, Typography, TextField, Button, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../auth/AuthContext';
@@ -9,12 +8,15 @@ import SendIcon from '@mui/icons-material/Send';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FlagIcon from '@mui/icons-material/Flag';
+import AttachFileIcon from '@mui/icons-material/AttachFile'; // New Icon
+import VideoCallIcon from '@mui/icons-material/VideoCall'; // New Icon
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
 
 // Types
 interface Message {
     chat_id: number;
     message: string;
+    attachment: string | null; // Added attachment
     sender: number; // User ID
     sender_name: string;
     sender_role?: string;
@@ -32,6 +34,7 @@ interface Ticket {
 
 const TicketDetail: React.FC = () => {
     const { ticketId } = useParams<{ ticketId: string }>();
+    const navigate = useNavigate();
     const { user, token } = useAuth();
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [chats, setChats] = useState<Message[]>([]);
@@ -39,6 +42,7 @@ const TicketDetail: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
 
     // Reporting
     const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -73,18 +77,30 @@ const TicketDetail: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chats]);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim()) return;
+    const handleSendMessage = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+
+        // Allow sending if text OR file exists
+        if (!newMessage.trim() && !fileInputRef.current?.files?.[0]) return;
+
         try {
             setLoading(true);
-            await axios.post(`${API_BASE_URL}/api/ticket-chats/`, {
-                ticket: ticketId,
-                message: newMessage
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
+            const formData = new FormData();
+            formData.append('ticket', ticketId!);
+            formData.append('message', newMessage);
+
+            if (fileInputRef.current?.files?.[0]) {
+                formData.append('attachment', fileInputRef.current.files[0]);
+            }
+
+            await axios.post(`${API_BASE_URL}/api/ticket-chats/`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
             });
             setNewMessage('');
+            if (fileInputRef.current) fileInputRef.current.value = ''; // Reset file input
             setShowEmojiPicker(false);
             fetchTicketData();
         } catch (err) {
@@ -108,6 +124,42 @@ const TicketDetail: React.FC = () => {
         } catch (err) {
             console.error("Failed to delete message", err);
             alert("Failed to delete message. You can only delete your own messages.");
+        }
+    };
+
+    // --- NEW ADMIN FUNCTIONS ---
+
+    const handleDeleteTicket = async () => {
+        if (!window.confirm("Are you sure you want to DELETE this entire ticket? This cannot be undone.")) return;
+        try {
+            await axios.delete(`${API_BASE_URL}/api/support-tickets/${ticketId}/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("Ticket deleted successfully.");
+            navigate(user?.role === 'admin' ? '/admin-dashboard' : '/community'); // Redirect appropriately
+        } catch (err) {
+            console.error("Failed to delete ticket", err);
+            alert("Failed to delete ticket.");
+        }
+    }
+
+    const handleStartCall = async () => {
+        const jitsiLink = `https://meet.jit.si/Edu2Job-Ticket-${ticketId}`;
+        const callMessage = `📞 Join the Video Call: ${jitsiLink}`;
+
+        try {
+            setLoading(true);
+            await axios.post(`${API_BASE_URL}/api/ticket-chats/`, {
+                ticket: ticketId,
+                message: callMessage
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchTicketData();
+        } catch (err) {
+            console.error("Failed to send call link", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -135,6 +187,21 @@ const TicketDetail: React.FC = () => {
         }
     };
 
+    // Render Attachment Helper
+    const renderAttachment = (url: string) => {
+        const isImage = url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+        const isVideo = url.match(/\.(mp4|webm|ogg)$/) != null;
+
+        if (isImage) return <Box component="img" src={url} sx={{ maxWidth: '100%', maxHeight: 200, borderRadius: 1, mt: 1, cursor: 'pointer' }} onClick={() => window.open(url, '_blank')} />;
+        if (isVideo) return <Box component="video" src={url} controls sx={{ maxWidth: '100%', maxHeight: 200, borderRadius: 1, mt: 1 }} />;
+
+        return (
+            <Button variant="outlined" size="small" href={url} target="_blank" sx={{ mt: 1, textTransform: 'none' }}>
+                Download Attachment
+            </Button>
+        );
+    };
+
     if (!ticket) return <Typography sx={{ p: 4 }}>Loading Ticket...</Typography>;
 
     return (
@@ -147,10 +214,26 @@ const TicketDetail: React.FC = () => {
                         {ticket.status} | {new Date(ticket.created_at).toLocaleString()}
                     </Typography>
                 </Box>
-                <Chip
-                    label={ticket.status}
-                    sx={{ bgcolor: 'white', color: '#075e54', fontWeight: 'bold' }}
-                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {user?.role === 'admin' && (
+                        <>
+                            <Tooltip title="Start Video Call">
+                                <IconButton onClick={handleStartCall} sx={{ color: 'white', bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}>
+                                    <VideoCallIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete Ticket">
+                                <IconButton onClick={handleDeleteTicket} sx={{ color: 'white', bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}>
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </>
+                    )}
+                    <Chip
+                        label={ticket.status}
+                        sx={{ bgcolor: 'white', color: '#075e54', fontWeight: 'bold' }}
+                    />
+                </Box>
             </Paper>
 
             {/* Chat Area */}
@@ -208,8 +291,16 @@ const TicketDetail: React.FC = () => {
                                             </Typography>
                                         )}
                                         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                                            {msg.message}
+                                            {/* Detect Links */}
+                                            {msg.message.split(' ').map((word, i) => {
+                                                if (word.startsWith('http')) return <a key={i} href={word} target="_blank" rel="noopener noreferrer" style={{ color: '#039be5' }}>{word} </a>
+                                                return word + ' ';
+                                            })}
                                         </Typography>
+
+                                        {/* Attachment */}
+                                        {msg.attachment && renderAttachment(msg.attachment)}
+
                                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 0.5, opacity: 0.6 }}>
                                             <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
                                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -257,6 +348,12 @@ const TicketDetail: React.FC = () => {
                         <IconButton onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
                             <EmojiEmotionsIcon color="action" />
                         </IconButton>
+                        {/* File Upload Button */}
+                        <IconButton component="label">
+                            <input hidden type="file" ref={fileInputRef} onChange={() => { if (newMessage === '') setNewMessage('File attached') }} />
+                            <AttachFileIcon color="action" />
+                        </IconButton>
+
                         {showEmojiPicker && (
                             <Box sx={{ position: 'absolute', bottom: 50, left: 0, zIndex: 10 }}>
                                 <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={400} />
@@ -269,15 +366,15 @@ const TicketDetail: React.FC = () => {
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { handleSendMessage(e); } }}
+                        onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { handleSendMessage(); } }}
                         variant="outlined"
                         size="small"
                         sx={{ bgcolor: 'white', borderRadius: 1 }}
                         disabled={loading || ticket.status === 'Resolved'}
                     />
                     <IconButton
-                        onClick={handleSendMessage}
-                        disabled={loading || !newMessage.trim() || ticket.status === 'Resolved'}
+                        onClick={() => handleSendMessage()}
+                        disabled={loading || (!newMessage.trim() && !fileInputRef.current?.files?.[0]) || ticket.status === 'Resolved'}
                         color="primary"
                         sx={{ bgcolor: '#128c7e', color: 'white', '&:hover': { bgcolor: '#075e54' } }}
                     >
