@@ -147,6 +147,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-**Dev Team** - [Email](mailto:contact@edu2job.com)
+**Dev Team** - [Email](sahoogyanaranjan353@gmail.com)
 
 Project Link: [https://github.com/Rajesh248810/Edu2Job](https://github.com/Rajesh248810/Edu2Job)
