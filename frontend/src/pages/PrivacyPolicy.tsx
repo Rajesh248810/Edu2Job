@@ -6,7 +6,7 @@ const PrivacyPolicy: React.FC = () => {
     return (
         <Container maxWidth="md" sx={{ mt: 10, mb: 10 }}>
             <GlassCard sx={{ p: 5 }}>
-                <Typography variant="h3" gutterBottom fontWeight="bold" color="primary">
+                <Typography variant="h3" component="h1" gutterBottom fontWeight="bold" color="primary">
                     Privacy Policy
                 </Typography>
                 <Typography variant="subtitle1" color="text.secondary" paragraph>
