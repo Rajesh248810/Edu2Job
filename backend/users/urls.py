@@ -25,7 +25,7 @@ router.register(r'support-tickets', SupportTicketViewSet)
 router.register(r'ticket-chats', TicketChatViewSet)
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'chat-reports', ChatReportViewSet)
-router.register(r'messages', MessageViewSet)
+router.register(r'messages', MessageViewSet, basename='message')
 
 
 urlpatterns = [
