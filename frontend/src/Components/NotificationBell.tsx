@@ -83,9 +83,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ sx }) => {
 
         // Navigate if it's a ticket reply
         if (notification.type === 'ticket_reply' && notification.message.includes('Support Agent')) {
-            // This is a rough heuristic, ideally we'd send ticket_id in notification payload
-            // For now, simpler to just go to HelpCenter or My Tickets list
-            navigate('/help-center'); // Or specific ticket if we had ID
+            navigate('/help-center');
+        } else if (notification.type === 'new_message') {
+            navigate('/community');
+            // Ideally we could pass state to open the specific chat, e.g. navigate('/community', { state: { openChatUser: sender } })
+            // But we'd need to parse sender from message or have it in payload.
+            // For now, just going to community is good.
         }
 
         handleClose();

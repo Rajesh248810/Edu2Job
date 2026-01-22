@@ -25,6 +25,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-google-recaptcha": "^3.1.0",
+    "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.9.6",
     "recharts": "^3.5.1"
   },
@@ -41,7 +42,8 @@
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "npm:rolldown-vite@7.2.5"
+    "vite": "npm:rolldown-vite@7.2.5",
+    "vite-plugin-compression": "^0.5.1"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"

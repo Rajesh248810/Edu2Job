@@ -25,6 +25,7 @@ const BlogDetail = lazy(() => import('./pages/resources/BlogDetail'));
 const TicketDetail = lazy(() => import('./pages/TicketDetail'));
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'));
 const VerificationPage = lazy(() => import('./pages/VerificationPage'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
 
 const Loading = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -41,6 +42,7 @@ function App() {
           {/* Public Routes - Uses Standard Header/Footer */}
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/about-us" element={<AboutUs />} />
             <Route path="/login" element={<HomePage />} />
             <Route path="/register" element={<HomePage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -60,7 +62,6 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<PublicProfile />} />
               <Route path="/predictor" element={<JobPredictor />} />
-              <Route path="/community" element={<CommunityPage />} />
               <Route path="/community" element={<CommunityPage />} />
               <Route path="/tickets/:ticketId" element={<TicketDetail />} />
               <Route path="/resume" element={<ResumeBuilder />} />

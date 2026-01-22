@@ -242,3 +242,22 @@ def send_ticket_reply_email(user, ticket_subject, reply_message):
     subject = f"Support Update: {ticket_subject}"
     html_content = get_email_template("Update on your Support Ticket", body, "View Ticket", "https://edu2job.online/help-center")
     send_html_email(subject, [user.email], html_content)
+
+def send_new_message_email(sender, recipient, message_content):
+    """
+    Sends an email to the recipient when they receive a new message from another user.
+    """
+    body = f"""
+        <p>Hi <strong>{recipient.name}</strong>,</p>
+        <p>You have received a new message from <strong>{sender.name}</strong> on Edu2Job Community.</p>
+        
+        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #334155; font-style: italic;">"{message_content}"</p>
+        </div>
+
+        <p>Log in to reply and continue the conversation.</p>
+    """
+    
+    subject = f"New Message from {sender.name} 💬"
+    html_content = get_email_template("New Community Message", body, "Reply Now", "https://edu2job.online/community")
+    send_html_email(subject, [recipient.email], html_content)

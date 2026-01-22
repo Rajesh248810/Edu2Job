@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeContextProvider } from './theme/ThemeContext';
+import { HelmetProvider } from 'react-helmet-async';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import ErrorBoundary from './Components/ErrorBoundary';
@@ -12,11 +13,13 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeContextProvider>
-        <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </GoogleOAuthProvider>
+        <HelmetProvider>
+          <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </GoogleOAuthProvider>
+        </HelmetProvider>
       </ThemeContextProvider>
     </ErrorBoundary>
   </StrictMode>,

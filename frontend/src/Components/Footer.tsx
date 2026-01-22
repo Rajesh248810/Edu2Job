@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Container, Typography, Link, IconButton, TextField, Button, Stack, Divider, Alert } from '@mui/material';
-import { Facebook, Twitter, LinkedIn, Instagram, Send } from '@mui/icons-material';
+import { Facebook, Twitter, LinkedIn, Instagram, Send, GitHub } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import api from '../api';
 
@@ -48,16 +48,19 @@ const Footer: React.FC = () => {
                             Bridging the gap between education and employment. We provide the tools and resources you need to succeed in your career journey.
                         </Typography>
                         <Stack direction="row" spacing={1}>
-                            <IconButton aria-label="Facebook" color="inherit" size="small">
+                            <IconButton aria-label="GitHub" color="inherit" size="small" href="https://github.com/Rajesh248810" target="_blank">
+                                <GitHub />
+                            </IconButton>
+                            <IconButton aria-label="Facebook" color="inherit" size="small" href="https://facebook.com" target="_blank">
                                 <Facebook />
                             </IconButton>
-                            <IconButton aria-label="Twitter" color="inherit" size="small">
+                            <IconButton aria-label="Twitter" color="inherit" size="small" href="https://twitter.com" target="_blank">
                                 <Twitter />
                             </IconButton>
-                            <IconButton aria-label="LinkedIn" color="inherit" size="small">
+                            <IconButton aria-label="LinkedIn" color="inherit" size="small" href="https://www.linkedin.com/in/gyanaranjan-sahoo-596998217/" target="_blank">
                                 <LinkedIn />
                             </IconButton>
-                            <IconButton aria-label="Instagram" color="inherit" size="small">
+                            <IconButton aria-label="Instagram" color="inherit" size="small" href="https://instagram.com" target="_blank">
                                 <Instagram />
                             </IconButton>
                         </Stack>
@@ -70,6 +73,7 @@ const Footer: React.FC = () => {
                         </Typography>
                         <Stack spacing={1}>
                             <Link href="/" color="text.secondary" underline="hover">Home</Link>
+                            <Link href="/about-us" color="text.secondary" underline="hover">About Us</Link>
                             <Link href="/community" color="text.secondary" underline="hover">Community</Link>
                             <Link href="/dashboard" color="text.secondary" underline="hover">Dashboard</Link>
                             <Link href="/login" color="text.secondary" underline="hover">Login</Link>

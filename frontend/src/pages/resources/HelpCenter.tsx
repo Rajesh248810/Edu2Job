@@ -162,7 +162,7 @@ const HelpCenter: React.FC = () => {
                             Can't find what you're looking for? Reach out to <strong>Rajesh Sahoo</strong> directly or submit a ticket below.
                         </Typography>
                         <Typography variant="body1" color="primary" sx={{ mb: 2, fontWeight: 'medium' }}>
-                            Email: rajesh248810@gmail.com
+                            Email: support@edu2job.online
                         </Typography>
                         <Typography color="text.secondary" paragraph>
                             Our support team will get back to you within 24 hours.

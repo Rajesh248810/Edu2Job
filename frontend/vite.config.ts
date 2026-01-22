@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import viteCompression from 'vite-plugin-compression';
 
 // https://vite.dev/config/
 // Force Vercel Rebuild: 2026-01-11
@@ -10,6 +11,7 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
+    viteCompression(),
   ],
   server: {
     headers: {

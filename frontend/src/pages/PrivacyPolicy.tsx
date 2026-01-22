@@ -57,7 +57,7 @@ const PrivacyPolicy: React.FC = () => {
                         5. Contact Us
                     </Typography>
                     <Typography paragraph>
-                        If you have any questions about this privacy policy or our privacy practices, please contact us at support@edu2job.com.
+                        If you have any questions about this privacy policy or our privacy practices, please contact us at support@edu2job.online.
                     </Typography>
                 </Box>
             </GlassCard>

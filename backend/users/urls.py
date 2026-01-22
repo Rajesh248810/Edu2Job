@@ -7,7 +7,7 @@ from .views import (
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
     AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView,
     SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet,
-    TestEmailView
+    TestEmailView, MessageViewSet
 )
 
 from .admin_views import (
@@ -25,6 +25,7 @@ router.register(r'support-tickets', SupportTicketViewSet)
 router.register(r'ticket-chats', TicketChatViewSet)
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'chat-reports', ChatReportViewSet)
+router.register(r'messages', MessageViewSet)
 
 
 urlpatterns = [

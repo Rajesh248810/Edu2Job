@@ -97,6 +97,7 @@ import { useAuth } from '../auth/AuthContext';
 import GlassCard from '../Components/GlassCard';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import SEO from '../Components/SEO';
 
 interface Prediction {
     role: string;
@@ -250,9 +251,11 @@ const JobPredictor: React.FC = () => {
 
     return (
         <Box sx={{ maxWidth: 900, mx: 'auto', mt: 6, mb: 6, px: 2 }}>
+            <SEO title="AI Job Predictor - Edu2Job" description="Get AI-powered career predictions based on your skills and academic history." />
             <Box sx={{ textAlign: 'center', mb: 6 }}>
                 <Typography
                     variant="h3"
+                    component="h1"
                     gutterBottom
                     fontWeight="800"
                     sx={{

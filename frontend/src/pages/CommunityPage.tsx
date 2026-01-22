@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
     Container, Card, CardContent, Typography, Avatar,
-    Box, Button, TextField, InputAdornment, CircularProgress, Alert, Chip, Pagination
+    Box, Button, TextField, InputAdornment, CircularProgress, Alert, Chip, Pagination,
+    Dialog, DialogTitle, DialogContent, DialogActions, Paper, IconButton, Popover
 } from '@mui/material';
-import { Search as SearchIcon, ArrowBack as ArrowBackIcon, History as HistoryIcon, Star as StarIcon, Verified as VerifiedIcon } from '@mui/icons-material';
+import { Search as SearchIcon, ArrowBack as ArrowBackIcon, History as HistoryIcon, Star as StarIcon, Verified as VerifiedIcon, Send as SendIcon, Chat as ChatIcon, Close as CloseIcon, AttachFile as AttachFileIcon, EmojiEmotions as EmojiIcon } from '@mui/icons-material';
+import { useAuth } from '../auth/AuthContext';
+import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import SEO from '../Components/SEO';
 
 interface User {
     user_id: number;
@@ -17,7 +21,20 @@ interface User {
     profile_picture?: string;
 }
 
+
+
+interface Message {
+    message_id: number;
+    sender: number;
+    recipient: number;
+    content: string;
+    attachment?: string;
+    timestamp: string;
+    is_read: boolean;
+}
+
 const CommunityPage: React.FC = () => {
+    const { user: currentUser, token } = useAuth();
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,6 +45,19 @@ const CommunityPage: React.FC = () => {
     // Pagination State
     const [page, setPage] = useState(1);
     const USERS_PER_PAGE = 9;
+
+    // Chat State
+    const [chatOpen, setChatOpen] = useState(false);
+    const [selectedChatUser, setSelectedChatUser] = useState<User | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
+    const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
+
+    // Emoji & File State
+    const [anchorElEmoji, setAnchorElEmoji] = useState<null | HTMLElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -74,6 +104,82 @@ const CommunityPage: React.FC = () => {
 
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+    };
+
+    // --- Chat Functions ---
+
+    const handleOpenChat = async (user: User) => {
+        if (!currentUser) {
+            alert("Please login to chat.");
+            return;
+        }
+        setSelectedChatUser(user);
+        setChatOpen(true);
+        setChatLoading(true);
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/messages/?other_user_id=${user.user_id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMessages(res.data);
+            scrollToBottom();
+        } catch (err) {
+            console.error("Failed to load messages", err);
+        } finally {
+            setChatLoading(false);
+        }
+    };
+
+    const handleCloseChat = () => {
+        setChatOpen(false);
+        setSelectedChatUser(null);
+        setMessages([]);
+        setNewMessage('');
+        setSelectedFile(null);
+    };
+
+    const handleSendMessage = async () => {
+        if ((!newMessage.trim() && !selectedFile) || !selectedChatUser) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('recipient', String(selectedChatUser.user_id));
+            formData.append('content', newMessage);
+            if (selectedFile) {
+                formData.append('attachment', selectedFile);
+            }
+
+            const res = await axios.post(`${API_BASE_URL}/api/messages/`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setMessages([...messages, res.data]);
+            setNewMessage('');
+            setSelectedFile(null);
+            scrollToBottom();
+        } catch (err) {
+            console.error("Failed to send message", err);
+            alert("Failed to send message. Please try again.");
+        }
+    };
+
+    const onEmojiClick = (emojiData: EmojiClickData) => {
+        setNewMessage(prev => prev + emojiData.emoji);
+        setAnchorElEmoji(null);
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const scrollToBottom = () => {
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
     };
 
     const featuredUsers = users.slice(0, 3);
@@ -126,7 +232,7 @@ const CommunityPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
                     {user.education?.[0]?.university ? `📍 ${user.education[0].university}` : 'No University Info'}
                 </Typography>
-                <Box sx={{ mt: 'auto', width: '100%' }}>
+                <Box sx={{ mt: 'auto', width: '100%', display: 'flex', gap: 1 }}>
                     <Button
                         variant={featured ? "contained" : "outlined"}
                         color={featured ? "warning" : "primary"}
@@ -135,6 +241,13 @@ const CommunityPage: React.FC = () => {
                         onClick={() => handleViewProfile(user.user_id)}
                     >
                         View Profile
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        sx={{ borderRadius: 20, minWidth: 50, border: '1px solid', borderColor: 'divider' }}
+                        onClick={() => handleOpenChat(user)}
+                    >
+                        <ChatIcon color="action" />
                     </Button>
                 </Box>
             </CardContent>
@@ -174,12 +287,13 @@ const CommunityPage: React.FC = () => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <SEO title="Community - Edu2Job" description="Connect with top achievers, students, and alumni. Explore placement records and networking opportunities." />
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/dashboard')} sx={{ mb: 2 }}>
                 Back to Dashboard
             </Button>
 
             <Box sx={{ textAlign: 'center', mb: 5 }}>
-                <Typography variant="h3" fontWeight="bold" color="primary" gutterBottom>
+                <Typography variant="h3" component="h1" fontWeight="bold" color="primary" gutterBottom>
                     Community
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
@@ -268,6 +382,116 @@ const CommunityPage: React.FC = () => {
                     )}
                 </>
             )}
+            {/* Chat Dialog */}
+            <Dialog open={chatOpen} onClose={handleCloseChat} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee' }}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Avatar src={selectedChatUser?.profile_picture ? `${API_BASE_URL}${selectedChatUser.profile_picture}` : undefined}>
+                            {selectedChatUser && getInitials(selectedChatUser.name)}
+                        </Avatar>
+                        <Typography variant="h6">{selectedChatUser?.name}</Typography>
+                    </Box>
+                    <IconButton onClick={handleCloseChat}><CloseIcon /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ bgcolor: '#f5f5f5', p: 0 }}>
+                    <Box sx={{ height: 400, overflowY: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {chatLoading ? (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%"><CircularProgress /></Box>
+                        ) : messages.length === 0 ? (
+                            <Typography color="text.secondary" align="center" mt={4}>Start a conversation!</Typography>
+                        ) : (
+                            messages.map((msg) => {
+                                const isMe = msg.sender === currentUser?.user_id; // Check ID match
+                                return (
+                                    <Box key={msg.message_id} sx={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                                        <Paper sx={{
+                                            p: 1.5,
+                                            px: 2,
+                                            maxWidth: '70%',
+                                            bgcolor: isMe ? 'primary.main' : 'white',
+                                            color: isMe ? 'white' : 'text.primary',
+                                            borderRadius: 2,
+                                            borderTopRightRadius: isMe ? 0 : 2,
+                                            borderTopLeftRadius: isMe ? 2 : 0
+                                        }}>
+                                            <Typography variant="body1">{msg.content}</Typography>
+                                            {msg.attachment && (
+                                                <Box sx={{ mt: 1 }}>
+                                                    {msg.attachment.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                                        <img
+                                                            src={msg.attachment.startsWith('http') ? msg.attachment : `${API_BASE_URL}${msg.attachment}`}
+                                                            alt="attachment"
+                                                            style={{ maxWidth: '100%', borderRadius: 4 }}
+                                                        />
+                                                    ) : (
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            color="inherit"
+                                                            href={msg.attachment.startsWith('http') ? msg.attachment : `${API_BASE_URL}${msg.attachment}`}
+                                                            target="_blank"
+                                                            startIcon={<AttachFileIcon />}
+                                                        >
+                                                            View File
+                                                        </Button>
+                                                    )}
+                                                </Box>
+                                            )}
+                                            <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8, textAlign: 'right', fontSize: '0.7rem' }}>
+                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            })
+                        )}
+                        <div ref={messagesEndRef} />
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, borderTop: '1px solid #eee' }}>
+                    <IconButton color="default" onClick={(e) => setAnchorElEmoji(e.currentTarget)}>
+                        <EmojiIcon />
+                    </IconButton>
+                    <IconButton color={selectedFile ? "primary" : "default"} onClick={() => fileInputRef.current?.click()}>
+                        <AttachFileIcon />
+                    </IconButton>
+                    <input
+                        type="file"
+                        hidden
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                    />
+
+                    <TextField
+                        fullWidth
+                        placeholder="Type a message..."
+                        size="small"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        helperText={selectedFile ? `File: ${selectedFile.name}` : ''}
+                    />
+                    <IconButton color="primary" onClick={handleSendMessage} disabled={!newMessage.trim() && !selectedFile}>
+                        <SendIcon />
+                    </IconButton>
+                </DialogActions>
+                <Popover
+                    open={Boolean(anchorElEmoji)}
+                    anchorEl={anchorElEmoji}
+                    onClose={() => setAnchorElEmoji(null)}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                    transformOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                >
+                    <EmojiPicker onEmojiClick={onEmojiClick} />
+                </Popover>
+            </Dialog>
+
         </Container>
     );
 };

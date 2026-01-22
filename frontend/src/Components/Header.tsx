@@ -44,6 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
 
     const navItems = [
         { label: 'Home', path: '/' },
+        { label: 'About Us', path: '/about-us' },
         { label: 'Help Center', path: '/help-center' },
         ...(user ? NAV_ITEMS : [])
     ];

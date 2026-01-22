@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Education, Certification, Predictionhistory, Skill, JobPlacement, SupportTicket, TicketChat, Notification, ChatReport
+from .models import User, Education, Certification, Predictionhistory, Skill, JobPlacement, SupportTicket, TicketChat, Notification, ChatReport, Message
 
 # 1. Serializer for Education Data
 from .utils import EncryptionUtil
@@ -208,3 +208,14 @@ class ChatReportSerializer(serializers.ModelSerializer):
         fields = ['report_id', 'reported_by', 'reported_by_name', 'chat_message', 'chat_message_content', 'reason', 'timestamp', 'status']
         read_only_fields = ['timestamp']
 
+        read_only_fields = ['timestamp']
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.name', read_only=True)
+    recipient_name = serializers.CharField(source='recipient.name', read_only=True)
+    sender_profile_picture = serializers.ImageField(source='sender.profile_picture', read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ['message_id', 'sender', 'recipient', 'sender_name', 'recipient_name', 'sender_profile_picture', 'content', 'attachment', 'timestamp', 'is_read']
+        read_only_fields = ['timestamp', 'is_read', 'sender']

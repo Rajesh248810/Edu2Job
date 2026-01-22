@@ -181,3 +181,5 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'support@edu2job.online')
 # ANYMAIL = {
 #     "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
 # } 
+
+ 

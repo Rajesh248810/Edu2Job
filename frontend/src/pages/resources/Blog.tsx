@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import SEO from '../../Components/SEO';
 import { Box, Container, Typography, Card, CardContent, CardMedia, Button, Chip, CircularProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -49,6 +50,7 @@ const Blog: React.FC = () => {
     }
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
+            <SEO title="Edu2Job Insights - Blog" description="Read expert perspectives on the future of work, AI, and career development." />
             {/* Hero Section */}
             <Box sx={{
                 textAlign: 'center',

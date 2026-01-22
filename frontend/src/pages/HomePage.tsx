@@ -1,4 +1,5 @@
 import React from 'react';
+import SEO from '../Components/SEO';
 import {
     Box, Typography, Button, Container,
     Avatar, Card, CardContent, Dialog, DialogContent, Chip
@@ -33,13 +34,25 @@ const HomePage: React.FC = () => {
         navigate('/');
     };
 
+    let title = 'Edu2Job - AI Career Predictor';
+    let description = 'Unlock your potential with Edu2Job. Use AI to predict your ideal career, build professional resumes, and find the right jobs for your skills.';
+
+    if (isLogin) {
+        title = 'Login - Edu2Job';
+        description = 'Login to your Edu2Job account to access your dashboard and career tools.';
+    } else if (isRegister) {
+        title = 'Register - Edu2Job';
+        description = 'Create a free Edu2Job account to get AI career predictions and resume building tools.';
+    }
+
     return (
         <>
+            <SEO title={title} description={description} />
             {/* Hero Banner */}
             <Box sx={{ py: 10, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                 <Container maxWidth="lg">
                     <GlassCard sx={{ p: { xs: 4, md: 8 }, textAlign: 'center', backdropFilter: 'blur(6px)' }}>
-                        <Typography variant="h2" fontWeight="900" sx={{ mb: 2, color: 'text.primary', textShadow: '0 6px 24px rgba(2,6,23,0.6)' }}>
+                        <Typography variant="h2" component="h1" fontWeight="900" sx={{ mb: 2, color: 'text.primary', textShadow: '0 6px 24px rgba(2,6,23,0.6)' }}>
                             Bridge your <Box component="span" sx={{ color: 'primary.main' }}>Education</Box> to your <Box component="span" sx={{ color: 'primary.main' }}>Dream Job</Box>
                         </Typography>
                         <Typography variant="h6" color="text.secondary" sx={{ mb: 5, maxWidth: 800, mx: 'auto' }}>

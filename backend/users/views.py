@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
-from .models import User, Education, Certification, Skill, JobPlacement, Predictionhistory, Feedback, SupportTicket, TicketChat, Notification, ChatReport
-from .serializers import UserSerializer, EducationSerializer, CertificationSerializer, SkillSerializer, JobPlacementSerializer, SupportTicketSerializer, TicketChatSerializer, NotificationSerializer, ChatReportSerializer
+from .models import User, Education, Certification, Skill, JobPlacement, Predictionhistory, Feedback, SupportTicket, TicketChat, Notification, ChatReport, Message
+from .serializers import UserSerializer, EducationSerializer, CertificationSerializer, SkillSerializer, JobPlacementSerializer, SupportTicketSerializer, TicketChatSerializer, NotificationSerializer, ChatReportSerializer, MessageSerializer
 import jwt, datetime
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -594,6 +594,64 @@ class ChatReportViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(reported_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(reported_by=self.request.user)
+
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        other_user_id = self.request.query_params.get('other_user_id')
+        
+        if other_user_id:
+            from django.db.models import Q
+            return Message.objects.filter(
+                Q(sender=user, recipient_id=other_user_id) | 
+                Q(sender_id=other_user_id, recipient=user)
+            ).order_by('timestamp')
+        
+        # Determine unique conversations? Or just list all recent messages?
+        # For now, return all messages involving this user
+        from django.db.models import Q
+        return Message.objects.filter(Q(sender=user) | Q(recipient=user)).order_by('-timestamp')
+
+    def perform_create(self, serializer):
+        sender = self.request.user
+        recipient_id = self.request.data.get('recipient')
+        recipient = User.objects.get(user_id=recipient_id)
+        
+        # Save the message
+        message = serializer.save(sender=sender, recipient=recipient)
+        
+        # Create In-App Notification
+        from .utils import create_notification, send_new_message_email
+        create_notification(
+            user=recipient,
+            message=f"New message from {sender.name}: {message.content[:30]}...",
+            type='new_message'
+        )
+        
+        # Check for previous interaction to trigger email
+        # We check if there are ANY messages between these two BEFORE this new one
+        # If count is 1 (the one just created), then it's the first message.
+        from django.db.models import Q
+        interaction_count = Message.objects.filter(
+            Q(sender=sender, recipient=recipient) | 
+            Q(sender=recipient, recipient=sender)
+        ).count()
+        
+        # If count is 1, it means this is the very first message between them
+        if interaction_count == 1:
+            try:
+                send_new_message_email(sender, recipient, message.content)
+            except Exception as e:
+                print(f"Failed to send first message email: {e}")
+
+
 
 class DebugStatusView(APIView):
     permission_classes = [permissions.AllowAny] # Public access for debugging

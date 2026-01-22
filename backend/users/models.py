@@ -185,3 +185,17 @@ class ChatReport(models.Model):
     class Meta:
         managed = True
         db_table = 'chat_reports'
+
+class Message(models.Model):
+    message_id = models.AutoField(primary_key=True)
+    sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    content = models.TextField()
+    attachment = models.FileField(upload_to='chat_attachments/', blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
+        db_table = 'messages'
+        ordering = ['timestamp']
