@@ -29,7 +29,7 @@ const FAQ: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
             <Box sx={{ textAlign: 'center', mb: 6 }}>
-                <Typography variant="h3" fontWeight="bold" gutterBottom color="primary">
+                <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom color="primary">
                     Frequently Asked Questions
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
