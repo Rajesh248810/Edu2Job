@@ -143,7 +143,7 @@ const HomePage: React.FC = () => {
             >
                 <DialogContent>
                     <Box sx={{ textAlign: 'center', mb: 2 }}>
-                        <Typography variant="h5" fontWeight="bold" color="primary">
+                        <Typography variant="h5" component="h1" fontWeight="bold" color="primary">
                             {isLogin ? 'Welcome Back' : 'Join Edu2Job'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
