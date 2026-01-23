@@ -261,3 +261,27 @@ def send_new_message_email(sender, recipient, message_content):
     subject = f"New Message from {sender.name} 💬"
     html_content = get_email_template("New Community Message", body, "Reply Now", "https://edu2job.online/community")
     send_html_email(subject, [recipient.email], html_content)
+
+
+def send_otp_email(email, otp):
+    """
+    Sends an OTP email to the user.
+    """
+    subject = "Your Password Reset OTP - Edu2Job"
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2c3e50;">Password Reset Request</h2>
+        <p>Hello,</p>
+        <p>You requested to reset your password for your Edu2Job account.</p>
+        <p>Your One-Time Password (OTP) is:</p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #007bff; letter-spacing: 5px; margin: 0;">{otp}</h1>
+        </div>
+        <p>This OTP is valid for <strong>2 minutes</strong>.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <br>
+        <p>Best regards,</p>
+        <p>The Edu2Job Team</p>
+    </div>
+    """
+    send_html_email(subject, [email], html_content)

@@ -9,6 +9,8 @@ from google.auth.transport import requests as google_requests
 import random
 import string
 from django.conf import settings
+from django.core.cache import cache
+
 import joblib
 import pandas as pd
 import os
@@ -753,3 +755,89 @@ class TestEmailView(APIView):
                 "traceback": traceback.format_exc(),
                 "last_step": status_data.get("step", "Unknown")
             }, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate 6-digit OTP
+        otp = f"{random.randint(100000, 999999)}"
+        
+        # Cache key: reset_otp:user@example.com
+        cache_key = f"reset_otp:{email}"
+        
+        # Store in cache for 120 seconds (2 minutes)
+        cache.set(cache_key, otp, timeout=120)
+
+        # Send Email
+        try:
+            from .utils import send_otp_email
+            send_otp_email(email, otp)
+        except Exception as e:
+            return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'message': 'OTP sent to your email. Expires in 2 minutes.'})
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+
+        if not email or not otp:
+            return Response({'error': 'Email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        cache_key = f"reset_otp:{email}"
+        cached_otp = cache.get(cache_key)
+
+        if cached_otp is None:
+             return Response({'error': 'OTP has expired or is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if str(cached_otp) != str(otp):
+             return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'OTP verified successfully.'})
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
+
+        if not email or not otp or not new_password:
+            return Response({'error': 'Email, OTP, and new password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify OTP again to be sure
+        cache_key = f"reset_otp:{email}"
+        cached_otp = cache.get(cache_key)
+
+        if cached_otp is None or str(cached_otp) != str(otp):
+             return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            # Update password
+            user.password_hash = new_password
+            user.save()
+
+            # Clear OTP
+            cache.delete(cache_key)
+
+            return Response({'message': 'Password reset successfully. You can now login.'})
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)

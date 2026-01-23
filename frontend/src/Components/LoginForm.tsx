@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../config';
 import { GoogleLogin } from '@react-oauth/google';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 // Styles
 const textFieldStyle = {
@@ -43,6 +44,7 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +138,17 @@ const LoginForm: React.FC = () => {
         InputLabelProps={{ sx: { color: 'text.secondary' } }}
         sx={textFieldStyle}
       />
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          size="small"
+          sx={{ textTransform: 'none', mb: 1 }}
+          onClick={() => setIsForgotOpen(true)}
+        >
+          Forgot Password?
+        </Button>
+      </Box>
+
       <Button
         type="submit"
         fullWidth
@@ -185,6 +198,8 @@ const LoginForm: React.FC = () => {
           }}
         />
       </Box>
+
+      <ForgotPasswordModal open={isForgotOpen} onClose={() => setIsForgotOpen(false)} />
     </Box>
   );
 };

@@ -7,7 +7,7 @@ from .views import (
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
     AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView,
     SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet,
-    TestEmailView, MessageViewSet
+    TestEmailView, MessageViewSet, ForgotPasswordView, VerifyOTPView, ResetPasswordView
 )
 
 from .admin_views import (
@@ -60,4 +60,8 @@ urlpatterns = [
     path('admin/feedback/', AdminFeedbackView.as_view(), name='admin_feedback'),
     path('admin/support-tickets/', AdminTicketView.as_view(), name='admin_ticket_list'),
     path('admin/support-tickets/<int:pk>/', AdminTicketView.as_view(), name='admin_ticket_detail'),
+    # Forgot Password Flow
+    path('auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
+    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+    path('auth/reset-password/', ResetPasswordView.as_view(), name='reset-password'),
 ] + router.urls
