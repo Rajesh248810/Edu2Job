@@ -8,6 +8,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import FeedIcon from '@mui/icons-material/Feed';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../../Components/SEO';
 
 const HelpCenter: React.FC = () => {
     const { user, token } = useAuth();
@@ -100,6 +101,11 @@ const HelpCenter: React.FC = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
+            <SEO
+                title="Help Center - Edu2Job | Support & Documentation"
+                description="Find answers to common questions, browse documentation, read our blog, or contact support. Edu2Job Help Center is here to assist you."
+                url="https://edu2job.online/help-center"
+            />
             {/* Header */}
             <Box sx={{ textAlign: 'center', mb: 8 }}>
                 <Typography variant="h3" fontWeight="bold" gutterBottom>

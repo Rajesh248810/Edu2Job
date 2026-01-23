@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Chip, Button, CircularProgress, Alert, Avatar, Divider } from '@mui/material';
 import { ArrowBack, Schedule } from '@mui/icons-material';
 import api from '../../api';
+import SEO from '../../Components/SEO';
 
 interface BlogPost {
     id: number;
@@ -12,6 +13,7 @@ interface BlogPost {
     category: string;
     author: string;
     created_at: string;
+    excerpt?: string; // Add optional excerpt if API returns it, or derive from content
 }
 
 const BlogDetail: React.FC = () => {
@@ -42,6 +44,12 @@ const BlogDetail: React.FC = () => {
 
     return (
         <Container maxWidth="md" sx={{ py: 6 }}>
+            <SEO
+                title={`${post.title} - Edu2Job Blog`}
+                description={post.excerpt || `Read ${post.title} on Edu2Job Insights.`}
+                url={`https://edu2job.online/blog/${slug}`}
+                type="article"
+            />
             <Button startIcon={<ArrowBack />} onClick={() => navigate('/blog')} sx={{ mb: 3 }}>
                 Back to Blog
             </Button>

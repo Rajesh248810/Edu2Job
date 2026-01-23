@@ -1,10 +1,16 @@
 import React from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import GlassCard from '../Components/GlassCard';
+import SEO from '../Components/SEO';
 
 const PrivacyPolicy: React.FC = () => {
     return (
         <Container maxWidth="md" sx={{ mt: 10, mb: 10 }}>
+            <SEO
+                title="Privacy Policy - Edu2Job"
+                description="Read our privacy policy to understand how we collect, use, and protect your personal data."
+                url="https://edu2job.online/privacy-policy"
+            />
             <GlassCard sx={{ p: 5 }}>
                 <Typography variant="h3" component="h1" gutterBottom fontWeight="bold" color="primary">
                     Privacy Policy

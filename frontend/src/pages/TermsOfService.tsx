@@ -1,10 +1,16 @@
 import React from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import GlassCard from '../Components/GlassCard';
+import SEO from '../Components/SEO';
 
 const TermsOfService: React.FC = () => {
     return (
         <Container maxWidth="md" sx={{ mt: 10, mb: 10 }}>
+            <SEO
+                title="Terms of Service - Edu2Job"
+                description="Read our terms of service to understand the rules and regulations for using Edu2Job."
+                url="https://edu2job.online/terms-of-service"
+            />
             <GlassCard sx={{ p: 5 }}>
                 <Typography variant="h3" component="h1" gutterBottom fontWeight="bold" color="primary">
                     Terms of Service

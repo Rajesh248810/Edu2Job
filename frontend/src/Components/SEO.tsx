@@ -6,19 +6,22 @@ interface SEOProps {
     description?: string;
     name?: string;
     type?: string;
+    url?: string;
 }
 
 const SEO: React.FC<SEOProps> = ({
     title = 'Edu2Job - AI Career Predictor',
     description = 'Unlock your potential with Edu2Job. Use AI to predict your ideal career, build professional resumes, and find the right jobs for your skills.',
     name = 'Edu2Job Team',
-    type = 'website'
+    type = 'website',
+    url
 }) => {
     return (
         <Helmet>
             {/* Standard metadata tags */}
             <title>{title}</title>
             <meta name='description' content={description} />
+            {url && <link rel="canonical" href={url} />}
 
             {/* End standard metadata tags */}
 
@@ -26,6 +29,7 @@ const SEO: React.FC<SEOProps> = ({
             <meta property="og:type" content={type} />
             <meta property="og:title" content={title} />
             <meta property="og:description" content={description} />
+            {url && <meta property="og:url" content={url} />}
 
             {/* End Facebook tags */}
 

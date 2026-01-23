@@ -17,6 +17,7 @@ const AboutUs: React.FC = () => {
             <SEO
                 title="About Us - Edu2Job | Meet the Team"
                 description="Meet Gyanaranjan Sahoo, the CEO & Founder of Edu2Job. We are bridging the gap between education and employment using AI."
+                url="https://edu2job.online/about-us"
             />
             <script type="application/ld+json">
                 {JSON.stringify({

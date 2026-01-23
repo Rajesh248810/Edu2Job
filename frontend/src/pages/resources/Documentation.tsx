@@ -2,10 +2,16 @@ import React from 'react';
 import { Box, Container, Typography, Paper, List, ListItemButton, ListItemText, ListItemIcon, Divider } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import SEO from '../../Components/SEO';
 
 const Documentation: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
+            <SEO
+                title="Documentation - Edu2Job"
+                description="Browse detailed guides and resources to get the most out of Edu2Job's career prediction and resume building tools."
+                url="https://edu2job.online/documentation"
+            />
             <Box sx={{ textAlign: 'center', mb: 6 }}>
                 <Typography variant="h3" fontWeight="bold" gutterBottom color="primary">
                     Documentation

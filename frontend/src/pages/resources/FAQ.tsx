@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Container, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SEO from '../../Components/SEO';
 
 const FAQ: React.FC = () => {
     const faqs = [
@@ -28,6 +29,11 @@ const FAQ: React.FC = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
+            <SEO
+                title="Frequently Asked Questions - Edu2Job"
+                description="Find answers to common questions about Edu2Job's AI career predictor, resume builder, and job finding tools."
+                url="https://edu2job.online/faq"
+            />
             <Box sx={{ textAlign: 'center', mb: 6 }}>
                 <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom color="primary">
                     Frequently Asked Questions

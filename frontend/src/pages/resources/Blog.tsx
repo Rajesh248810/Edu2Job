@@ -50,7 +50,11 @@ const Blog: React.FC = () => {
     }
     return (
         <Container maxWidth="lg" sx={{ py: 6 }}>
-            <SEO title="Edu2Job Insights - Blog" description="Read expert perspectives on the future of work, AI, and career development." />
+            <SEO
+                title="Edu2Job Insights - Blog"
+                description="Read expert perspectives on the future of work, AI, and career development."
+                url="https://edu2job.online/blog"
+            />
             {/* Hero Section */}
             <Box sx={{
                 textAlign: 'center',
