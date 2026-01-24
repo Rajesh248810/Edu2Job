@@ -12,7 +12,13 @@ export interface User {
   is_prime?: boolean;
   prime_expiry?: string;
   hire_now?: boolean;
-  // Add other fields as needed
+  education?: any[];
+  placements?: any[];
+  certifications?: any[];
+  skills?: any[];
+  banner_image?: string;
+  about_me?: string;
+  phone_number?: string;
 }
 
 // Define the shape of our Context
