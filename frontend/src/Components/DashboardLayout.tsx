@@ -5,7 +5,8 @@ import {
 } from '@mui/material';
 import {
     Logout as LogoutIcon,
-    Home as HomeIcon
+    Home as HomeIcon,
+    Verified as VerifiedIcon
 } from '@mui/icons-material';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -67,6 +68,29 @@ const DashboardLayout: React.FC = () => {
                     </ListItem>
                 ))}
             </List>
+
+            <List sx={{ px: 2, mt: 1 }}>
+                {/* Upgrade Button */}
+                {/* Use optional chaining safely using any cast or proper type if imported */}
+                {!((useAuth() as any).user?.is_prime) && (
+                    <ListItem disablePadding sx={{ mb: 1 }}>
+                        <ListItemButton
+                            onClick={() => handleNavigation('/upgrade')}
+                            sx={{
+                                borderRadius: 2,
+                                background: 'linear-gradient(45deg, #FFD700 30%, #FFA500 90%)',
+                                color: 'black',
+                                boxShadow: 2,
+                                '&:hover': { background: 'linear-gradient(45deg, #FFD700 60%, #FFA500 90%)' }
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'black' }}><VerifiedIcon /></ListItemIcon>
+                            <ListItemText primary="Upgrade to Prime" primaryTypographyProps={{ fontWeight: 'bold' }} />
+                        </ListItemButton>
+                    </ListItem>
+                )}
+            </List>
+
             <Box sx={{ flexGrow: 1 }} />
             <List sx={{ px: 2, mb: 2 }}>
                 <ListItem disablePadding>

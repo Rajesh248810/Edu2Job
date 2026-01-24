@@ -7,7 +7,8 @@ import {
     School as SchoolIcon,
     Brightness4,
     Brightness7,
-    Menu as MenuIcon
+    Menu as MenuIcon,
+    Verified as VerifiedIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -126,7 +127,12 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
                                     PaperProps={{ sx: { mt: 1.5, minWidth: 200, borderRadius: 2, boxShadow: 3 } }}
                                 >
                                     <Box sx={{ px: 2, py: 1 }}>
-                                        <Typography fontWeight="bold">{user.name}</Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography fontWeight="bold">{user.name}</Typography>
+                                            {user.is_prime && (
+                                                <VerifiedIcon sx={{ color: '#FFD700', fontSize: 16 }} />
+                                            )}
+                                        </Box>
                                         <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                                     </Box>
                                     <Divider />

@@ -84,6 +84,45 @@ const HomePage: React.FC = () => {
                 </Container>
             </Box>
 
+            {/* Prime Offer Banner */}
+            <Container maxWidth="lg" sx={{ mb: 6 }}>
+                <Box
+                    sx={{
+                        background: 'linear-gradient(90deg, #000 0%, #1a1a00 50%, #000 100%)',
+                        border: '1px solid #FFD700',
+                        borderRadius: 4,
+                        p: 3,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.2)'
+                    }}
+                >
+                    <Box>
+                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#FFD700', mb: 1 }}>
+                            ✨ Become a Prime Member for just ₹1!
+                        </Typography>
+                        <Typography color="text.secondary">
+                            Unlock limited-time access to Premium Career Insights, "Hire Me" Badge, and more.
+                        </Typography>
+                    </Box>
+                    <Button
+                        variant="contained"
+                        onClick={() => navigate('/upgrade')}
+                        sx={{
+                            mt: { xs: 2, md: 0 },
+                            bgcolor: '#FFD700',
+                            color: 'black',
+                            fontWeight: 'bold',
+                            '&:hover': { bgcolor: '#F2D06B' }
+                        }}
+                    >
+                        Claim Offer
+                    </Button>
+                </Box>
+            </Container>
+
             {/* Feature Stats */}
             <Container maxWidth="lg" sx={{ py: 8 }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>

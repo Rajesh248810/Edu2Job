@@ -24,8 +24,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ sx }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [shouldPoll, setShouldPoll] = useState(true);
 
     const fetchNotifications = async () => {
+        if (!token || !shouldPoll) return;
         try {
             const res = await axios.get(`${API_BASE_URL}/api/notifications/`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -33,25 +35,21 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ sx }) => {
             setNotifications(res.data);
             setUnreadCount(res.data.filter((n: Notification) => !n.is_read).length);
         } catch (err: any) {
-            console.error("Failed to fetch notifications", err);
-            // If unauthorized, clear token to stop polling loop
+            // If unauthorized, stop polling
             if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                // We should ideally call logout() from context, but we can't easily destructure it if not exposed.
-                // Assuming token is invalid, we can just stop polling or warn user.
-                // For now, let's just log it. The main app AuthContext should handle global 401s if equipped.
-                // But to be safe for this specific component loop:
                 console.warn("Notification polling stopped due to auth error.");
+                setShouldPoll(false);
             }
         }
     };
 
     useEffect(() => {
-        if (token) {
+        if (token && shouldPoll) {
             fetchNotifications();
             const interval = setInterval(fetchNotifications, 10000); // Poll every 10s
             return () => clearInterval(interval);
         }
-    }, [token]);
+    }, [token, shouldPoll]);
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);

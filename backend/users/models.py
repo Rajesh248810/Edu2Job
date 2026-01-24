@@ -9,6 +9,11 @@ class User(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     banner_image = models.ImageField(upload_to='banners/', blank=True, null=True)
     about_me = models.TextField(blank=True, null=True)
+    
+    # Prime Membership Fields
+    is_prime = models.BooleanField(default=False)
+    prime_expiry = models.DateTimeField(blank=True, null=True)
+    hire_now = models.BooleanField(default=False, help_text="Available for hire (Prime only)")
 
     class Meta:
         managed = True

@@ -1,9 +1,10 @@
 import { createTheme } from '@mui/material/styles';
 
-export const getTheme = (mode: 'light' | 'dark') => {
+export const getTheme = (mode: 'light' | 'dark' | 'prime') => {
+  const effectiveMode = mode === 'prime' ? 'dark' : mode;
   return createTheme({
     palette: {
-      mode,
+      mode: effectiveMode,
       ...(mode === 'light'
         ? {
           // Light Mode (LinkedIn Style)
@@ -23,24 +24,43 @@ export const getTheme = (mode: 'light' | 'dark') => {
             secondary: 'rgba(0, 0, 0, 0.6)',
           },
         }
-        : {
-          // Dark Mode (Existing)
-          primary: {
-            main: '#667eea',
-            contrastText: '#fff',
-          },
-          secondary: {
-            main: '#764ba2',
-          },
-          background: {
-            default: '#071029',
-            paper: '#1e293b', // Solid Dark Blue-Gray for better readability
-          },
-          text: {
-            primary: 'rgba(255,255,255,0.92)',
-            secondary: 'rgba(255,255,255,0.72)',
-          },
-        }),
+        : mode === 'prime'
+          ? {
+            // Prime Mode (Luxury Gold)
+            primary: {
+              main: '#FFD700', // Gold
+              contrastText: '#000',
+            },
+            secondary: {
+              main: '#DAA520', // GoldenRod
+            },
+            background: {
+              default: '#000000',
+              paper: '#0a0a0a',
+            },
+            text: {
+              primary: '#FFD700', // Gold Text
+              secondary: 'rgba(255, 215, 0, 0.7)',
+            },
+          }
+          : {
+            // Dark Mode (Existing)
+            primary: {
+              main: '#667eea',
+              contrastText: '#fff',
+            },
+            secondary: {
+              main: '#764ba2',
+            },
+            background: {
+              default: '#071029',
+              paper: '#1e293b',
+            },
+            text: {
+              primary: 'rgba(255,255,255,0.92)',
+              secondary: 'rgba(255,255,255,0.72)',
+            },
+          }),
     },
     shape: { borderRadius: 12 },
     typography: {

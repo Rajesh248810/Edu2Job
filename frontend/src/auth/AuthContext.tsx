@@ -2,11 +2,24 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import api from '../api';
 
+// Define User Interface
+export interface User {
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+  profile_picture?: string;
+  is_prime?: boolean;
+  prime_expiry?: string;
+  hire_now?: boolean;
+  // Add other fields as needed
+}
+
 // Define the shape of our Context
 interface AuthContextType {
-  user: any;
+  user: User | null;
   token: string | null;
-  login: (userData: any, token: string) => void;
+  login: (userData: User, token: string) => void;
   logout: () => void;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
@@ -17,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // The Provider Component (Wraps the whole app)
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // 2. Login Function (Updates State + LocalStorage)
-  const login = (userData: any, tokenData: string) => {
+  const login = (userData: User, tokenData: string) => {
     setUser(userData);
     setToken(tokenData);
     localStorage.setItem('user', JSON.stringify(userData));

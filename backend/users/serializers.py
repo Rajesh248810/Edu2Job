@@ -197,7 +197,34 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['user_id', 'name', 'email', 'role', 'education', 'certifications', 'predictions', 'skills', 'placements', 'profile_picture', 'banner_image', 'about_me']
+        fields = ['user_id', 'name', 'email', 'role', 'education', 'certifications', 'predictions', 'skills', 'placements', 'profile_picture', 'banner_image', 'about_me', 'is_prime', 'prime_expiry', 'hire_now']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        
+        request = self.context.get('request')
+        if not request:
+            return ret
+            
+        viewer = request.user
+        if not viewer or not viewer.is_authenticated:
+             # Public view (if we allowed it), hide sensitive info
+             ret.pop('email', None)
+             ret.pop('predictions', None)
+             return ret
+
+        # If viewer is the owner or admin, show everything
+        if viewer.user_id == instance.user_id or getattr(viewer, 'role', '') == 'admin':
+            return ret
+
+        # If viewer is NOT Prime
+        if not getattr(viewer, 'is_prime', False):
+            # Mask Email
+            ret.pop('email', None)
+            # Hide Predictions
+            ret.pop('predictions', None)
+        
+        return ret
 
 class ChatReportSerializer(serializers.ModelSerializer):
     reported_by_name = serializers.CharField(source='reported_by.name', read_only=True)

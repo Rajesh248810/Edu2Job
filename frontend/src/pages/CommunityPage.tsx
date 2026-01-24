@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import SEO from '../Components/SEO';
+import PrimeBadge from '../Components/PrimeBadge';
 
 interface User {
     user_id: number;
@@ -19,6 +20,7 @@ interface User {
     education: { university: string }[];
     placements: { role: string; company: string }[];
     profile_picture?: string;
+    is_prime?: boolean;
 }
 
 
@@ -227,7 +229,10 @@ const CommunityPage: React.FC = () => {
                 >
                     {getInitials(user.name)}
                 </Avatar>
-                <Typography variant="h6" fontWeight="bold">{user.name}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography variant="h6" fontWeight="bold">{user.name}</Typography>
+                    {user.is_prime && <PrimeBadge />}
+                </Box>
                 <Typography variant="body2" color="primary" gutterBottom>{user.role}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
                     {user.education?.[0]?.university ? `📍 ${user.education[0].university}` : 'No University Info'}

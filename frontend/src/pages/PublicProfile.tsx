@@ -8,11 +8,14 @@ import {
     Verified as VerifiedIcon,
     ArrowBack as ArrowBackIcon,
     Code as CodeIcon,
-    Work as WorkIcon
+    Work as WorkIcon,
+    Lock as LockIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import GlassCard from '../Components/GlassCard';
+import PrimeBadge from '../Components/PrimeBadge';
+import { Tooltip } from '@mui/material';
 
 interface Education {
     university: string;
@@ -43,13 +46,16 @@ interface UserProfile {
     user_id: number;
     name: string;
     role: string;
-    email: string;
+    email?: string; // Optional because it might be masked
     education: Education[];
     certifications: Certification[];
     skills: Skill[];
     placements: Placement[];
     profile_picture?: string;
     banner_image?: string;
+    is_prime?: boolean;
+    hire_now?: boolean;
+    predictions?: any[];
 }
 
 const PublicProfile: React.FC = () => {
@@ -127,14 +133,20 @@ const PublicProfile: React.FC = () => {
                             mb: 2,
                             bgcolor: 'primary.main',
                             fontSize: '2.5rem',
-                            border: '4px solid white',
-                            boxShadow: 2
+                            border: profile.is_prime ? '4px solid #FFD700' : '4px solid white',
+                            boxShadow: profile.is_prime ? '0 0 20px #FFD700' : 2,
                         }}
                     >
                         {getInitials(profile.name)}
                     </Avatar>
-                    <Typography variant="h3" fontWeight="bold" gutterBottom>{profile.name}</Typography>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant="h3" fontWeight="bold">
+                            {profile.name}
+                        </Typography>
+                        {profile.is_prime && <PrimeBadge />}
+                    </Box>
+
+                    <Typography variant="h6" color="text.secondary" gutterBottom sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
                         {profile.role}
                         {profile.placements && profile.placements.length > 0 && (
                             <Chip
@@ -142,11 +154,33 @@ const PublicProfile: React.FC = () => {
                                 color="success"
                                 size="small"
                                 icon={<VerifiedIcon />}
-                                sx={{ ml: 1, fontWeight: 'bold' }}
+                                sx={{ fontWeight: 'bold' }}
+                            />
+                        )}
+                        {profile.hire_now && (
+                            <Chip
+                                label="Hire Me"
+                                color="secondary"
+                                size="small"
+                                sx={{ fontWeight: 'bold', background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)', color: 'white' }}
                             />
                         )}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">{profile.email}</Typography>
+
+                    {profile.email ? (
+                        <Typography variant="body1" color="text.secondary">{profile.email}</Typography>
+                    ) : (
+                        <Tooltip title="Upgrade to Prime to view contact details">
+                            <Typography
+                                variant="body1"
+                                color="text.disabled"
+                                sx={{ filter: 'blur(4px)', cursor: 'pointer', display: 'inline-block' }}
+                                onClick={() => navigate('/upgrade')}
+                            >
+                                hidden_email@example.com
+                            </Typography>
+                        </Tooltip>
+                    )}
                 </Box>
             </GlassCard>
 
@@ -238,6 +272,42 @@ const PublicProfile: React.FC = () => {
                             <Typography color="text.secondary">No skills added.</Typography>
                         )}
                     </Box>
+                </GlassCard>
+
+                {/* Latest Prediction (Prime) */}
+                <GlassCard sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Avatar sx={{ bgcolor: 'rgba(233, 30, 99, 0.12)', color: 'secondary.main', mr: 2 }}><LockIcon /></Avatar>
+                        <Typography variant="h6" fontWeight="bold">Career Insight</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {profile.predictions && profile.predictions.length > 0 ? (
+                        profile.predictions.slice(0, 1).map((pred: any, i: number) => (
+                            <Box key={i}>
+                                <Typography variant="subtitle2" color="text.secondary">Latest AI Prediction</Typography>
+                                <Typography variant="h5" color="primary" fontWeight="bold" gutterBottom>
+                                    {pred.role}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    Confidence: {pred.confidence ? `${(pred.confidence * 100).toFixed(1)}%` : 'N/A'}
+                                </Typography>
+                            </Box>
+                        ))
+                    ) : (
+                        !profile.predictions ? (
+                            <Box sx={{ textAlign: 'center', py: 2 }}>
+                                <Typography variant="body2" color="text.secondary" paragraph>
+                                    Unlock insights to see this user's latest career prediction.
+                                </Typography>
+                                <Button variant="outlined" size="small" onClick={() => navigate('/upgrade')}>
+                                    Unlock with Prime
+                                </Button>
+                            </Box>
+                        ) : (
+                            <Typography color="text.secondary">No predictions run yet.</Typography>
+                        )
+                    )}
                 </GlassCard>
 
             </Box>

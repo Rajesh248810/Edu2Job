@@ -12,15 +12,15 @@ import ErrorBoundary from './Components/ErrorBoundary';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ThemeContextProvider>
-        <HelmetProvider>
-          <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
-            <AuthProvider>
+      <HelmetProvider>
+        <GoogleOAuthProvider clientId="463529438142-dpm6nrfs3ep90vnaigvev5cglnfpevtu.apps.googleusercontent.com">
+          <AuthProvider>
+            <ThemeContextProvider>
               <App />
-            </AuthProvider>
-          </GoogleOAuthProvider>
-        </HelmetProvider>
-      </ThemeContextProvider>
+            </ThemeContextProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

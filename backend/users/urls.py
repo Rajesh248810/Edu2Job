@@ -15,6 +15,7 @@ from .admin_views import (
     AdminModelView, AdminUniversityDetailView, AdminPredictionLogListView, AdminPredictionLogDetailView, AdminFeedbackView,
     AdminTicketView
 )
+from .payment_views import CreateOrderView, VerifyPaymentView
 
 router = DefaultRouter()
 router.register(r'education', EducationViewSet)
@@ -64,4 +65,8 @@ urlpatterns = [
     path('auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('auth/reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+
+    # Payment / Prime Config
+    path('payment/create-order/', CreateOrderView.as_view(), name='create-order'),
+    path('payment/verify/', VerifyPaymentView.as_view(), name='verify-payment'),
 ] + router.urls

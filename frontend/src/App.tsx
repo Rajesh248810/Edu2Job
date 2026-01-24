@@ -26,6 +26,7 @@ const TicketDetail = lazy(() => import('./pages/TicketDetail'));
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'));
 const VerificationPage = lazy(() => import('./pages/VerificationPage'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
+const UpgradePage = lazy(() => import('./pages/UpgradePage'));
 
 const Loading = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -64,7 +65,9 @@ function App() {
               <Route path="/predictor" element={<JobPredictor />} />
               <Route path="/community" element={<CommunityPage />} />
               <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+              <Route path="/tickets/:ticketId" element={<TicketDetail />} />
               <Route path="/resume" element={<ResumeBuilder />} />
+              <Route path="/upgrade" element={<UpgradePage />} />
             </Route>
 
             {/* Admin Dashboard - Standalone Layout */}
