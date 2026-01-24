@@ -277,23 +277,37 @@ const PublicProfile: React.FC = () => {
                 {/* Latest Prediction (Prime) */}
                 <GlassCard sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <Avatar sx={{ bgcolor: 'rgba(233, 30, 99, 0.12)', color: 'secondary.main', mr: 2 }}><LockIcon /></Avatar>
+                        <Avatar sx={{ bgcolor: 'rgba(233, 30, 99, 0.12)', color: 'secondary.main', mr: 2 }}>
+                            {!profile.predictions ? <LockIcon /> : <VerifiedIcon />}
+                        </Avatar>
                         <Typography variant="h6" fontWeight="bold">Career Insight</Typography>
                     </Box>
                     <Divider sx={{ mb: 2 }} />
 
                     {profile.predictions && profile.predictions.length > 0 ? (
-                        profile.predictions.slice(0, 1).map((pred: any, i: number) => (
-                            <Box key={i}>
-                                <Typography variant="subtitle2" color="text.secondary">Latest AI Prediction</Typography>
-                                <Typography variant="h5" color="primary" fontWeight="bold" gutterBottom>
-                                    {pred.role}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Confidence: {pred.confidence ? `${(pred.confidence * 100).toFixed(1)}%` : 'N/A'}
-                                </Typography>
-                            </Box>
-                        ))
+                        profile.predictions.slice(0, 1).map((pred: any, i: number) => {
+                            // Helper to extract data safer since structure might vary
+                            const role = Array.isArray(pred.predicted_roles) ? pred.predicted_roles[0] : pred.predicted_roles;
+                            // Confidence might be in confidence_scores (could be dict or list?)
+                            // Assuming simple structure for now or map simply
+                            let confidence = 0;
+                            if (pred.confidence_scores) {
+                                if (Array.isArray(pred.confidence_scores)) confidence = pred.confidence_scores[0];
+                                else if (typeof pred.confidence_scores === 'object') confidence = Object.values(pred.confidence_scores)[0] as number;
+                            }
+
+                            return (
+                                <Box key={i}>
+                                    <Typography variant="subtitle2" color="text.secondary">Latest AI Prediction</Typography>
+                                    <Typography variant="h5" color="primary" fontWeight="bold" gutterBottom>
+                                        {role || 'Unknown Role'}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Confidence: {confidence ? `${(confidence * 100).toFixed(1)}%` : 'N/A'}
+                                    </Typography>
+                                </Box>
+                            );
+                        })
                     ) : (
                         !profile.predictions ? (
                             <Box sx={{ textAlign: 'center', py: 2 }}>
