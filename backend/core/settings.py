@@ -188,5 +188,5 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'support@edu2job.online')
 # Replace these with your actual Test Keys from Razorpay Dashboard
 # Key ID: rzp_test_...
 # Key Secret: ...
-RAZORPAY_KEY_ID = 'rzp_live_S7cNkpz97gmAFE'
-RAZORPAY_KEY_SECRET = 'JfD54R8SEk4Zs20U49eEOGMY'
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'razorpay_secret_placeholder')

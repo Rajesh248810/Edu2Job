@@ -11,6 +11,11 @@ class CreateOrderView(APIView):
 
     def post(self, request):
         try:
+            # DEBUG: Check which key is being loaded
+            key_id = settings.RAZORPAY_KEY_ID
+            masked_key = key_id[:8] + "****" if key_id else "None"
+            print(f"DEBUG: Using Razorpay Key: {masked_key}")
+
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
             
             # Amount in paise (1 INR = 100 paise)
