@@ -246,7 +246,7 @@ const Dashboard: React.FC = () => {
                     <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 0.5 }}>
                       {placement.placement_type} • Joined: {placement.date_of_joining}
                     </Typography>
-                    {index < user.placements.length - 1 && <Divider sx={{ my: 2 }} />}
+                    {index < (user?.placements?.length || 0) - 1 && <Divider sx={{ my: 2 }} />}
                   </Box>
                 ))
               ) : (

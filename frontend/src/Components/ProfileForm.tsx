@@ -127,9 +127,13 @@ const ProfileForm: React.FC = () => {
     try {
       setLoading(true);
       // Using partial update endpoint
-      await api.patch(`/api/users/${user.user_id}/update/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      if (user?.user_id) {
+        await api.patch(`/api/users/${user.user_id}/update/`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        throw new Error('User ID not found');
+      }
       setMessage({ type: 'success', text: 'Image updated successfully!' });
       refreshUser();
     } catch (err: any) {
@@ -362,7 +366,7 @@ const ProfileForm: React.FC = () => {
   const renderSkillChips = () => (
     <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, textAlign: 'center' }}>
       <Box display="flex" justifyContent="center" flexWrap="wrap" gap={1.5}>
-        {user?.skills?.length > 0 ? user.skills.map((skill: any) => (
+        {user?.skills && user.skills.length > 0 ? user.skills.map((skill: any) => (
           <Chip
             key={skill.skill_id}
             label={skill.skill_name}
