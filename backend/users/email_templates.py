@@ -1,3 +1,121 @@
+
+# Generic Golden Template for Prime Users
+GOLDEN_EMAIL_WRAPPER = """
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1c1c1c 0%, #000 100%);
+            border: 2px solid #D4AF37;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }}
+        .header {{
+            background: linear-gradient(to right, #D4AF37, #C5A028, #D4AF37);
+            padding: 20px;
+            text-align: center;
+        }}
+        .header h1 {{
+            margin: 0;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 24px;
+            font-weight: 800;
+        }}
+        .content {{
+            padding: 40px 30px;
+            text-align: center;
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 16px;
+        }}
+        h2 {{
+            color: #D4AF37;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 300;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            display: inline-block;
+        }}
+        .vip-tag {{
+            background-color: #D4AF37;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }}
+        a {{
+            color: #D4AF37;
+            text-decoration: none;
+            font-weight: bold;
+        }}
+        .cta-button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(to right, #D4AF37, #F2D06B);
+            color: #000 !important;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 50px;
+            margin-top: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }}
+        .footer {{
+            background-color: #0a0a0a;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #333;
+        }}
+    </style>
+</head>
+<body>
+    <div style="padding: 20px;">
+        <div class="container">
+            <div class="header">
+                <h1>Edu2Job Prime</h1>
+            </div>
+            <div class="content">
+                <div class="vip-tag">&#10024; VIP MEMBER EXCLUSIVE &#10024;</div>
+                <br>
+                <h2>{title}</h2>
+                <div style="text-align: left;">
+                    {body_content}
+                </div>
+                {cta_html}
+            </div>
+            <div class="footer">
+                &copy; 2026 Edu2Job. All Rights Reserved.<br>
+                Premium Service for Prime Members
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
 PRIME_WELCOME_TEMPLATE = """
 <!DOCTYPE html>
 <html>

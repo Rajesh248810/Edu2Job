@@ -90,49 +90,78 @@ def create_notification(user, message, type='system'):
 
 # --- EMAIL UTILITIES ---
 
-def get_email_template(title, body_content, cta_text=None, cta_link=None):
+def get_email_template(title, body_content, cta_text=None, cta_link=None, user=None):
     """
-    Returns a professional, responsive HTML email template (Amazon/Flipkart style).
+    Returns a professional responsive HTML email template.
+    If 'user' is provided and is Prime, returns the Golden VIP Template.
     """
     cta_html = ""
     if cta_text and cta_link:
-        cta_html = f"""
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{cta_link}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: sans-serif;">{cta_text}</a>
+        # Style CTA differently for Prime implicitly via Wrapper class or inline logic if needed
+        # But for now, we pass the HTML to the wrapper.
+        # However, the Golden Wrapper expects cta_html to be passed, while Standard renders it inside this function?
+        # Let's standardize.
+        
+        # We will keep the button style generic here, and let the Wrapper styling inside head override it if needed.
+        # Actually, for Golden, the CSS class .cta-button is defined in the wrapper.
+        pass
+
+    # Logic to select template
+    if user and getattr(user, 'is_prime', False):
+        from .email_templates import GOLDEN_EMAIL_WRAPPER
+        
+        # Create CTA HTML for Golden
+        gold_cta = ""
+        if cta_text and cta_link:
+            gold_cta = f'<a href="{cta_link}" class="cta-button">{cta_text}</a>'
+            
+        return GOLDEN_EMAIL_WRAPPER.format(
+            title=title,
+            body_content=body_content,
+            cta_html=gold_cta
+        )
+    else:
+        # Standard Blue/White Template
+        
+        standard_cta = ""
+        if cta_text and cta_link:
+            standard_cta = f"""
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{cta_link}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: sans-serif;">{cta_text}</a>
+                </div>
+            """
+
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <!-- Header -->
+                <div style="background-color: #1E293B; padding: 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Edu2Job</h1>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; color: #333333; line-height: 1.6;">
+                    <h2 style="color: #1E293B; margin-top: 0;">{title}</h2>
+                    {body_content}
+                    {standard_cta}
+                </div>
+
+                <!-- Footer -->
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
+                    <p style="margin: 0;">&copy; 2026 Edu2Job. All rights reserved.</p>
+                    <p style="margin: 5px 0;">Empowering Careers with AI.</p>
+                    <p style="margin: 0;"><a href="https://edu2job.online" style="color: #2563EB; text-decoration: none;">Visit Website</a></p>
+                </div>
             </div>
+        </body>
+        </html>
         """
-
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-            <!-- Header -->
-            <div style="background-color: #1E293B; padding: 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Edu2Job</h1>
-            </div>
-
-            <!-- Body -->
-            <div style="padding: 30px; color: #333333; line-height: 1.6;">
-                <h2 style="color: #1E293B; margin-top: 0;">{title}</h2>
-                {body_content}
-                {cta_html}
-            </div>
-
-            <!-- Footer -->
-            <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px;">
-                <p style="margin: 0;">&copy; 2026 Edu2Job. All rights reserved.</p>
-                <p style="margin: 5px 0;">Empowering Careers with AI.</p>
-                <p style="margin: 0;"><a href="https://edu2job.online" style="color: #2563EB; text-decoration: none;">Visit Website</a></p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
 
 def send_html_email(subject, recipient_list, html_content):
     """
@@ -196,7 +225,7 @@ def send_welcome_email(user):
         </ul>
         <p>We can't wait to see what you achieve!</p>
     """
-    html_content = get_email_template("Welcome to the Future of Career Planning", body, "Complete Your Profile", "https://edu2job.online/profile")
+    html_content = get_email_template("Welcome to the Future of Career Planning", body, "Complete Your Profile", "https://edu2job.online/profile", user=user)
     send_html_email(subject, [user.email], html_content)
 
 
@@ -220,7 +249,7 @@ def send_prediction_email(user, prediction_result):
     """
     
     subject = f"Your Career Prediction Result: {role} 🎯"
-    html_content = get_email_template("Career Analysis Report", body, "View Detailed Report", "https://edu2job.online/dashboard")
+    html_content = get_email_template("Career Analysis Report", body, "View Detailed Report", "https://edu2job.online/dashboard", user=user)
     send_html_email(subject, [user.email], html_content)
 
 
@@ -240,7 +269,7 @@ def send_ticket_reply_email(user, ticket_subject, reply_message):
     """
     
     subject = f"Support Update: {ticket_subject}"
-    html_content = get_email_template("Update on your Support Ticket", body, "View Ticket", "https://edu2job.online/help-center")
+    html_content = get_email_template("Update on your Support Ticket", body, "View Ticket", "https://edu2job.online/help-center", user=user)
     send_html_email(subject, [user.email], html_content)
 
 def send_new_message_email(sender, recipient, message_content):
@@ -259,18 +288,31 @@ def send_new_message_email(sender, recipient, message_content):
     """
     
     subject = f"New Message from {sender.name} 💬"
-    html_content = get_email_template("New Community Message", body, "Reply Now", "https://edu2job.online/community")
+    html_content = get_email_template("New Community Message", body, "Reply Now", "https://edu2job.online/community", user=recipient)
     send_html_email(subject, [recipient.email], html_content)
 
 
 def send_otp_email(email, otp):
     """
     Sends an OTP email to the user.
+    Note: We might not have the user object here easily if it's just 'forgot password' by email.
+    However, we can try to fetch user if needed, OR just leave OTP as standard.
+    Usually OTP is barebones. But let's check if we can.
     """
+    # Fetch user if possible to check Prime status, otherwise default standard.
+    from .models import User
+    user_obj = None
+    try:
+        user_obj = User.objects.get(email=email)
+    except:
+        pass
+
     subject = "Your Password Reset OTP - Edu2Job"
-    html_content = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2c3e50;">Password Reset Request</h2>
+    
+    # Generic OTP Body - We pass this as body_content into the template wrapper now to be consistent!
+    # Previous implementation bypassed get_email_template. Let's unify it.
+    
+    body = f"""
         <p>Hello,</p>
         <p>You requested to reset your password for your Edu2Job account.</p>
         <p>Your One-Time Password (OTP) is:</p>
@@ -279,9 +321,7 @@ def send_otp_email(email, otp):
         </div>
         <p>This OTP is valid for <strong>2 minutes</strong>.</p>
         <p>If you did not request this, please ignore this email.</p>
-        <br>
-        <p>Best regards,</p>
-        <p>The Edu2Job Team</p>
-    </div>
     """
+    
+    html_content = get_email_template("Password Reset Request", body, user=user_obj)
     send_html_email(subject, [email], html_content)
