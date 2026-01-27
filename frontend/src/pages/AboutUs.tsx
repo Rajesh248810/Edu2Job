@@ -19,29 +19,7 @@ const AboutUs: React.FC = () => {
                 description="Meet Gyanaranjan Sahoo, the CEO & Founder of Edu2Job. We are bridging the gap between education and employment using AI."
                 url="https://edu2job.online/about-us"
             />
-            <script type="application/ld+json">
-                {JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@type": "Organization",
-                    "name": "Edu2Job",
-                    "url": "https://edu2job.online",
-                    "logo": "https://edu2job.online/assets/logo.svg",
-                    "founder": {
-                        "@type": "Person",
-                        "name": "Gyanaranjan Sahoo",
-                        "jobTitle": "CEO & Founder",
-                        "url": "https://linkedin.com/in/gyanaranjan-sahoo-596998217/",
-                        "sameAs": [
-                            "https://github.com/Rajesh248810",
-                            "https://linkedin.com/in/gyanaranjan-sahoo-596998217/"
-                        ]
-                    },
-                    "sameAs": [
-                        "https://github.com/Rajesh248810",
-                        "https://linkedin.com/in/gyanaranjan-sahoo-596998217/"
-                    ]
-                })}
-            </script>
+
 
             {/* Header Section */}
             <Box sx={{ textAlign: 'center', mb: 8 }}>
