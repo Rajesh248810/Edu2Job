@@ -165,7 +165,7 @@ const HelpCenter: React.FC = () => {
                             Contact Support
                         </Typography>
                         <Typography color="text.secondary" paragraph>
-                            Can't find what you're looking for? Reach out to <strong>Rajesh Sahoo</strong> directly or submit a ticket below.
+                            Can't find what you're looking for? Reach out to <strong>Gyanaranjan Sahoo</strong> directly or submit a ticket below.
                         </Typography>
                         <Typography variant="body1" color="primary" sx={{ mb: 2, fontWeight: 'medium' }}>
                             Email: support@edu2job.online
