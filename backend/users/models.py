@@ -47,7 +47,7 @@ class Certification(models.Model):
     issue_date = models.DateField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'certification'
 
 
@@ -74,7 +74,7 @@ class Adminlogs(models.Model):
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'adminlogs'
 
 # --- NEW MODELS FOR TRAINING ---
