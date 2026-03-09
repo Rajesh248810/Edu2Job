@@ -55,7 +55,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.COOPMiddleware',
     'core.security_middleware.BlockMaliciousAgentsMiddleware',
     'core.security_middleware.RateLimitMiddleware',
 ]
@@ -125,6 +124,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+# Detect HTTPS behind proxy (Render/Vercel)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # HSTS configuration (be careful with these in local dev if not using HTTPS)
 if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
