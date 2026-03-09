@@ -879,3 +879,19 @@ class ResetPasswordView(APIView):
             return Response({'message': 'Password reset successfully. You can now login.'})
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class DebugErrorLogView(APIView):
+    # Secured by checking admin role
+    def get(self, request):
+        if getattr(request.user, 'role', '') != 'admin':
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+        
+        log_paths = ['debug_api_errors.log', 'debug_errors.log']
+        logs = {}
+        for path in log_paths:
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    logs[path] = f.read()
+            else:
+                logs[path] = "File not found."
+        return Response(logs)

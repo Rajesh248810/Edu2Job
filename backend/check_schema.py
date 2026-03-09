@@ -9,7 +9,7 @@ django.setup()
 def check_table():
     with open('schema_output.txt', 'w') as f:
         with connection.cursor() as cursor:
-            for table_name in ['certification', 'user']:
+            for table_name in ['certification', 'education', 'user']:
                 try:
                     cursor.execute(f"DESCRIBE {table_name}")
                     columns = cursor.fetchall()

@@ -7,7 +7,8 @@ from .views import (
     EducationViewSet, CertificationViewSet, SkillViewSet, JobPlacementViewSet,
     AutocompleteView, PredictionHistoryView, FeedbackView, DebugStatusView,
     SupportTicketViewSet, TicketChatViewSet, NotificationViewSet, ChatReportViewSet,
-    TestEmailView, MessageViewSet, ForgotPasswordView, VerifyOTPView, ResetPasswordView
+    TestEmailView, MessageViewSet, ForgotPasswordView, VerifyOTPView, ResetPasswordView,
+    DebugErrorLogView
 )
 
 from .admin_views import (
@@ -57,6 +58,7 @@ urlpatterns = [
     path('suggest/', AutocompleteView.as_view(), name='autocomplete'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
     path('debug-status/', DebugStatusView.as_view(), name='debug_status'),
+    path('debug-errors/', DebugErrorLogView.as_view(), name='debug_errors'),
     path('test-email/', TestEmailView.as_view(), name='test_email'),
     path('admin/feedback/', AdminFeedbackView.as_view(), name='admin_feedback'),
     path('admin/support-tickets/', AdminTicketView.as_view(), name='admin_ticket_list'),

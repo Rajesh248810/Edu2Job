@@ -17,6 +17,29 @@ Constraints for certification:
   CONSTRAINT `certification_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
+Table: education
+  ('education_id', 'int', 'NO', 'PRI', None, 'auto_increment')
+  ('user_id', 'int', 'NO', 'MUL', None, '')
+  ('degree', 'varchar(255)', 'NO', '', None, '')
+  ('specialization', 'varchar(255)', 'NO', '', None, '')
+  ('university', 'varchar(255)', 'NO', '', None, '')
+  ('CGPA', 'varchar(255)', 'NO', '', None, '')
+  ('year_of_completion', 'int', 'NO', '', None, '')
+
+Constraints for education:
+  CREATE TABLE `education` (
+  `education_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `degree` varchar(255) NOT NULL,
+  `specialization` varchar(255) NOT NULL,
+  `university` varchar(255) NOT NULL,
+  `CGPA` varchar(255) NOT NULL,
+  `year_of_completion` int NOT NULL,
+  PRIMARY KEY (`education_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `education_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
 Table: user
   ('user_id', 'int', 'NO', 'PRI', None, 'auto_increment')
   ('name', 'varchar(100)', 'NO', '', None, '')
