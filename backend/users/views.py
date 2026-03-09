@@ -226,6 +226,11 @@ class SetPasswordView(APIView):
 class PredictJobView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
+        
+        # Fallback to authenticated user if missing in body
+        if not user_id and request.user and request.user.is_authenticated:
+            user_id = request.user.user_id
+            
         if not user_id:
             return Response({'error': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
