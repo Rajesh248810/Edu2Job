@@ -149,21 +149,24 @@ class PredictionSerializer(serializers.ModelSerializer):
 
 # 4. Serializer for Skills
 class SkillSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Skill
-        fields = ['skill_id', 'skill_name']
+        fields = ['skill_id', 'user', 'skill_name']
 
 # 5. Serializer for Job Placement
 class JobPlacementSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = JobPlacement
-        fields = ['placement_id', 'role', 'company', 'placement_type', 'date_of_joining']
+        fields = ['placement_id', 'user', 'role', 'company', 'placement_type', 'date_of_joining']
 
 # 6. Serializer for Support Tickets
 class SupportTicketSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = SupportTicket
-        fields = ['ticket_id', 'subject', 'message', 'status', 'created_at']
+        fields = ['ticket_id', 'user', 'subject', 'message', 'status', 'created_at']
         read_only_fields = ['created_at']
 
 # 7. Chat and Notification Serializers
