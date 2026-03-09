@@ -1,0 +1,49 @@
+Table: certification
+  ('cert_id', 'int', 'NO', 'PRI', None, 'auto_increment')
+  ('user_id', 'int', 'NO', 'MUL', None, '')
+  ('cert_name', 'varchar(100)', 'NO', '', None, '')
+  ('issuing_organization', 'varchar(100)', 'NO', '', None, '')
+  ('issue_date', 'date', 'NO', '', None, '')
+
+Constraints for certification:
+  CREATE TABLE `certification` (
+  `cert_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `cert_name` varchar(100) NOT NULL,
+  `issuing_organization` varchar(100) NOT NULL,
+  `issue_date` date NOT NULL,
+  PRIMARY KEY (`cert_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `certification_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+Table: user
+  ('user_id', 'int', 'NO', 'PRI', None, 'auto_increment')
+  ('name', 'varchar(100)', 'NO', '', None, '')
+  ('email', 'varchar(100)', 'NO', 'UNI', None, '')
+  ('password_hash', 'varchar(255)', 'NO', '', None, '')
+  ('role', 'varchar(10)', 'NO', '', None, '')
+  ('banner_image', 'varchar(100)', 'YES', '', None, '')
+  ('profile_picture', 'varchar(100)', 'YES', '', None, '')
+  ('about_me', 'longtext', 'YES', '', None, '')
+  ('hire_now', 'tinyint(1)', 'NO', '', None, '')
+  ('is_prime', 'tinyint(1)', 'NO', '', None, '')
+  ('prime_expiry', 'datetime(6)', 'YES', '', None, '')
+
+Constraints for user:
+  CREATE TABLE `user` (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` varchar(10) NOT NULL,
+  `banner_image` varchar(100) DEFAULT NULL,
+  `profile_picture` varchar(100) DEFAULT NULL,
+  `about_me` longtext,
+  `hire_now` tinyint(1) NOT NULL,
+  `is_prime` tinyint(1) NOT NULL,
+  `prime_expiry` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+

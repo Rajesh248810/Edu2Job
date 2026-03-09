@@ -314,8 +314,17 @@ class BaseUserViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Automatically attach user from request
-        serializer.save(user=self.request.user)
+        try:
+            # Automatically attach user from request
+            serializer.save(user=self.request.user)
+        except Exception as e:
+            import traceback
+            error_msg = f"ERROR in perform_create ({self.__class__.__name__}): {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)
+            # Log to a file we can read
+            with open('debug_api_errors.log', 'a') as f:
+                f.write(error_msg + "\n")
+            raise e
 
 class EducationViewSet(BaseUserViewSet):
     queryset = Education.objects.all()
