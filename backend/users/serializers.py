@@ -81,9 +81,10 @@ class EducationSerializer(serializers.ModelSerializer):
 
 # 2. Serializer for Certification Data
 class CertificationSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Certification
-        fields = ['cert_id', 'cert_name', 'issuing_organization', 'issue_date']
+        fields = ['cert_id', 'user', 'cert_name', 'issuing_organization', 'issue_date']
 
 # 3. Serializer for Prediction History
 class PredictionSerializer(serializers.ModelSerializer):
