@@ -41,10 +41,11 @@ class RegisterView(APIView):
         try:
             print("DEBUG: Creating User...")
             try:
+                from django.contrib.auth.hashers import make_password
                 user = User.objects.create(
                     name=f"{firstName} {lastName}",
                     email=email,
-                    password_hash=password,
+                    password_hash=make_password(password),
                     role='student'
                 )
                 print(f"DEBUG: User created {user.user_id}")
@@ -59,25 +60,29 @@ class RegisterView(APIView):
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
             
-            # Welcome Notification (Non-blocking)
-            try:
-                print("DEBUG: Creating Notification...")
-                create_notification(
-                    user=user,
-                    message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
-                    type='welcome'
-                )
-            except Exception as e:
-                print(f"DEBUG: Notification failed (Non-critical): {e}")
-            
-            # Send Welcome Email (Non-blocking)
-            try:
-                print("DEBUG: Sending Email...")
-                from .utils import send_welcome_email
-                send_welcome_email(user)
-                print("DEBUG: Email function called")
-            except Exception as e:
-                print(f"Warning: Welcome email could not be sent (Non-critical): {e}")
+            # PERFORMANCE OPTIMIZATION: Handle non-critical tasks in background thread
+            def background_onboarding(user, firstName):
+                # Welcome Notification
+                try:
+                    from .utils import create_notification
+                    create_notification(
+                        user=user,
+                        message=f"Welcome to Edu2Job, {firstName}! We're exploring career paths with you.",
+                        type='welcome'
+                    )
+                except Exception as e:
+                    print(f"DEBUG: Notification failed (Non-critical): {e}")
+                
+                # Send Welcome Email
+                try:
+                    from .utils import send_welcome_email
+                    send_welcome_email(user)
+                    print("DEBUG: Email function called in background")
+                except Exception as e:
+                    print(f"Warning: Welcome email could not be sent (Non-critical): {e}")
+
+            import threading
+            threading.Thread(target=background_onboarding, args=(user, firstName)).start()
 
             serializer = UserSerializer(user)
             print("DEBUG: Success Response Ready")
@@ -98,7 +103,24 @@ class LoginView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if user.password_hash != password:
+        from django.contrib.auth.hashers import check_password, make_password
+        
+        # Check password (handles both hashed and plain text via check_password if configured properly, 
+        # but we need to handle our legacy plain text manual check too)
+        is_correct = False
+        
+        # 1. Try hashed check (Standard Django)
+        if check_password(password, user.password_hash):
+            is_correct = True
+        # 2. Lazy Migration: Try plain text check for legacy users
+        elif user.password_hash == password:
+            is_correct = True
+            # SECURITY UPGRADE: Hash the password now that they've logged in successfully
+            user.password_hash = make_password(password)
+            user.save()
+            print(f"DEBUG: Migrated legacy password for {email}")
+
+        if not is_correct:
             return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
 
         payload = {
@@ -195,7 +217,9 @@ class SetPasswordView(APIView):
         new_password = request.data.get('password')
         if not new_password:
              return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
-        user.password_hash = new_password
+        
+        from django.contrib.auth.hashers import make_password
+        user.password_hash = make_password(new_password)
         user.save()
         return Response({'message': 'Password set successfully'}, status=status.HTTP_200_OK)
 

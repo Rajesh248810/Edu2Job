@@ -56,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.COOPMiddleware',
+    'core.security_middleware.BlockMaliciousAgentsMiddleware',
+    'core.security_middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -119,8 +121,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Security: Detect HTTPS behind proxy (Render/Vercel)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# --- SECURITY HEADERS ---
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+# HSTS configuration (be careful with these in local dev if not using HTTPS)
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True # Ensure all traffic is HTTPS in prod
+
+SECURE_REFERRER_POLICY = 'same-origin'
 
 # --- API & REACT CONFIGURATION ---
 

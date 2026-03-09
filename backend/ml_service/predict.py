@@ -43,15 +43,19 @@ ROLE_SKILLS_MAPPING = {
     "data science stack": ["Python", "Pandas", "NumPy", "Scikit-learn", "SQL", "Matplotlib"],
 }
 
+# Global variable to cache the model in memory
+_CACHED_MODEL = None
+
 def predict_job(user_profile):
     """
     Predicts job role based on user profile.
     user_profile: dict containing 'degree', 'specialization', 'skills', 'certifications'
     """
+    global _CACHED_MODEL
     model_path = os.path.join(settings.BASE_DIR, 'ml_models', 'job_predictor.pkl')
     
     if not os.path.exists(model_path):
-        # DEBUGGING: Print where we are looking and what is there
+        # ... (error handling remains the same)
         debug_info = f"Looking at: {model_path}. BASE_DIR: {settings.BASE_DIR}. "
         try:
             debug_info += f"Contents of BASE_DIR: {os.listdir(settings.BASE_DIR)}. "
@@ -65,7 +69,12 @@ def predict_job(user_profile):
         return {"error": f"Model not found. {debug_info}"}
     
     try:
-        clf = joblib.load(model_path)
+        # PERFORMANCE OPTIMIZATION: Load model once and keep in memory
+        if _CACHED_MODEL is None:
+            print(f"DEBUG: Loading ML model from {model_path} into memory...")
+            _CACHED_MODEL = joblib.load(model_path)
+        
+        clf = _CACHED_MODEL
         
         # Prepare input dataframe
         user_skills_str = user_profile.get('skills', '')
